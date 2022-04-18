@@ -89,9 +89,11 @@ class VkFontAwesomeVersions {
 	 * アイコンの class 名だけ保存されている場合も i タグに変換して出力する
 	 *
 	 * @param string $option : saved value.
+	 * @param string $additional_class : i タグに追加する Font Awesome 以外のクラス名.
+	 *
 	 * @return string $icon_html : icon tag
 	 */
-	public static function get_icon_tag( $option = '' ) {
+	public static function get_icon_tag( $option = '', $additional_class = '' ) {
 		if ( empty( $option ) ) {
 			return;
 		}
@@ -100,13 +102,26 @@ class VkFontAwesomeVersions {
 			false !== strpos( $option, '</i>' )
 		) {
 			$icon_html = $option;
+			if ( $additional_class ) {
+				preg_match( '/(<i class=\")(.*)(\"><\/i>)/', $option, $matches );
+				if ( ! empty( $matches[2] ) ) {
+					$icon_html = '<i class="' . $matches[2] . ' ' . $additional_class . '"></i>';
+				}
+			}
 		} else {
 
 			// 4.7 fall back.
 			$print_fa = '';
 			$print_fa = self::print_fa();
 
-			$icon_html = '<i class="' . esc_attr( $print_fa ) . esc_attr( $option ) . '"></i>';
+			$class = $print_fa . $option;
+
+			// Font Awesome 以外のクラス名がある場合.
+			if ( $additional_class ) {
+				$class .= ' ' . $additional_class;
+			}
+
+			$icon_html = '<i class="' . esc_attr( $class ) . '"></i>';
 		}
 		return $icon_html;
 	}
