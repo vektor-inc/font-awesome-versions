@@ -74,6 +74,11 @@ if ( method_exists( 'VektorInc\VK_Font_Awesome_Versions\VkFontAwesomeVersions', 
 }
 ```
 
+#### iタグに通常の Font Awesome のクラス以外のものを追加する場合
+
+```
+$icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope', 'example-class-name' );
+```
 
 ---
 
