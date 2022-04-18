@@ -30,8 +30,9 @@ composer translate
  */
 
 use VektorInc\VK_Font_Awesome_Versions\VkFontAwesomeVersions;
-
-VkFontAwesomeVersions::init();
+if ( method_exists( 'VektorInc\VK_Font_Awesome_Versions\VkFontAwesomeVersions', 'init' ) ) {
+	VkFontAwesomeVersions::init();
+}
 
 // カスタマイズ画面でのパネルのプリフィックス（オプション）
 global $vkfav_customize_panel_prefix;
@@ -53,12 +54,12 @@ use VektorInc\VK_Font_Awesome_Versions\VkFontAwesomeVersions;
 
 // 使用する場所に記述
 if ( method_exists( 'VektorInc\VK_Font_Awesome_Versions\VkFontAwesomeVersions', 'ex_and_link' ) ) {
-	$array            = array(
+	$example_class_array            = array(
 		'v4.7' => 'fa-envelope-o',
 		'v5'   => 'far fa-envelope',
 		'v6'   => 'fa-regular fa-envelope',
 	);
-	$icon_description = VkFontAwesomeVersions::ex_and_link( 'class', $array );
+	$icon_description = VkFontAwesomeVersions::ex_and_link( 'class', $example_class_array );
 }
 ```
 
