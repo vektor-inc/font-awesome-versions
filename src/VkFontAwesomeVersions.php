@@ -373,7 +373,7 @@ class VkFontAwesomeVersions {
 		if ( '4.7' === $current_option ) {
 			$old_notice .= '<div class="error">';
 			$old_notice .= '<p>' . __( 'An older version of Font Awesome is selected. This version will be removed by August 2022.', 'font-awesome-versions' ) . '</p>';
-			$old_notice .= '<p>' . __( 'Plesee change the version of FontAwesome on the Appearance > Customize screen.', 'font-awesome-versions' ) . '</p>';
+			$old_notice .= '<p>' . __( 'Please change the version of FontAwesome on the Appearance > Customize screen.', 'font-awesome-versions' ) . '</p>';
 			$old_notice .= '<p>' . __( '* It is necessary to reset the icon font in the place where Font Awesome is used.', 'font-awesome-versions' ) . '</p>';
 			$old_notice .= '</div>';
 		}

@@ -1,4 +1,5 @@
 # font-awesome
+
 Font Awesome
 
 Packagist
@@ -13,6 +14,7 @@ composer require vektor-inc/font-awesome-versions
 ```
 composer translate
 ```
+
 からの Poedit で翻訳
 
 ## 使い方
@@ -46,6 +48,7 @@ $vkfav_customize_panel_priority = 560;
 global $vkfav_set_enqueue_handle_style;
 $vkfav_set_enqueue_handle_style = 'lightning-design-style';
 ```
+
 ### 設定画面での例の表示
 
 ```
@@ -75,7 +78,7 @@ if ( method_exists( 'VektorInc\VK_Font_Awesome_Versions\VkFontAwesomeVersions', 
 }
 ```
 
-#### iタグに通常の Font Awesome のクラス以外のものを追加する場合
+#### i タグに通常の Font Awesome のクラス以外のものを追加する場合
 
 ```
 $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope', 'example-class-name' );
@@ -84,13 +87,16 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 ---
 
 0.4.0
-* [ 機能追加 ] i タグに Font Awesome 以外のタグを追加できるように引数追加
-* [ 機能追加 ] アイコンの例を書き換えられるように引数追加
 
-0.3.3
-* [ 機能追加 ] クラス名だけでも i タグに変換して出力するメソッド追加
-* [ 機能改善 ] ディレクトリ uri を グローバル変数で受け渡さなくても自動取得するように対応
-* [ 仕様変更 ] グローバル変数が不適切だったため調整
+- [ 機能追加 ] i タグに Font Awesome 以外のタグを追加できるように引数追加
+- [ 機能追加 ] アイコンの例を書き換えられるように引数追加
 
-0.2.1
-* [ 不具合修正 ] Font Awesome へのリンクの設定例表記が間違っていたので修正
+  0.3.3
+
+- [ 機能追加 ] クラス名だけでも i タグに変換して出力するメソッド追加
+- [ 機能改善 ] ディレクトリ uri を グローバル変数で受け渡さなくても自動取得するように対応
+- [ 仕様変更 ] グローバル変数が不適切だったため調整
+
+  0.2.1
+
+- [ 不具合修正 ] Font Awesome へのリンクの設定例表記が間違っていたので修正
