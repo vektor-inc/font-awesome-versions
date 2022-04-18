@@ -82,6 +82,10 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+0.4.0
+* [ 機能追加 ] i タグに Font Awesome 以外のタグを追加できるように引数追加
+* [ 機能追加 ] アイコンの例を書き換えられるように引数追加
+
 0.3.3
 * [ 機能追加 ] クラス名だけでも i タグに変換して出力するメソッド追加
 * [ 機能改善 ] ディレクトリ uri を グローバル変数で受け渡さなくても自動取得するように対応

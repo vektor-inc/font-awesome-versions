@@ -5,7 +5,7 @@
  * @package vektor-inc/font-awesome-versions
  * @license GPL-2.0+
  *
- * @version 0.3.3
+ * @version 0.4.0
  */
 
 namespace VektorInc\VK_Font_Awesome_Versions;
@@ -105,7 +105,7 @@ class VkFontAwesomeVersions {
 			if ( $additional_class ) {
 				preg_match( '/(<i class=\")(.*)(\"><\/i>)/', $option, $matches );
 				if ( ! empty( $matches[2] ) ) {
-					$icon_html = '<i class="' . $matches[2] . ' ' . $additional_class . '"></i>';
+					$icon_html = '<i class="' . esc_attr( $matches[2] ) . ' ' . esc_attr( $additional_class ) . '"></i>';
 				}
 			}
 		} else {
