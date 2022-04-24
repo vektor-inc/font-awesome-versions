@@ -80,8 +80,18 @@ class VkFontAwesomeVersions {
 	 * @return string $uri
 	 */
 	public static function get_directory_uri() {
+
+		$uri = '';
+
+		// このファイルのパス.
 		$path = wp_normalize_path( dirname( __FILE__ ) );
-		$uri  = str_replace( wp_normalize_path( ABSPATH ), site_url() . '/', $path ) . '/';
+
+		// ABSPATH は WordPress.com で /wordpress/core/5.9.3/ のような返し方をされて、一般的なサーバーのパスとは異なるので、置換などには使用しない.
+		preg_match( '/(.*)(wp-content.*)/', $path, $matches, PREG_OFFSET_CAPTURE );
+		if ( ! empty( $matches[2][0] ) ) {
+			$uri = site_url( '/' ) . $matches[2][0] . '/';
+		}
+
 		return $uri;
 	}
 
