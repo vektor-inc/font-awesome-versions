@@ -77,14 +77,17 @@ class VkFontAwesomeVersions {
 	 * Undocumented function
 	 *
 	 * @since 0.3.0
+	 * @param string $path : PHPUnit テスト用
 	 * @return string $uri
 	 */
-	public static function get_directory_uri() {
+	public static function get_directory_uri( $path = '' ) {
 
 		$uri = '';
 
-		// このファイルのパス.
-		$path = wp_normalize_path( dirname( __FILE__ ) );
+		if ( ! $path ) {
+			// このファイルのパス.
+			$path = wp_normalize_path( dirname( __FILE__ ) );
+		}
 
 		// ファイルのパスの wp-content より前の部分を site_url() に置換する
 		// ABSPATH の部分を site_url() に置換したいところだが、ABSPATHは WordPress.com で /wordpress/core/5.9.3/ のような返し方をされて、一般的なサーバーのパスとは異なるので、置換などには使用しない.
