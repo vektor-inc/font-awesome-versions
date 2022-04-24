@@ -86,6 +86,11 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+0.4.1
+
+- [ 不具合修正 ] WordPress.com でファイルパスが正しく取得できない不具合対応
+
+
 0.4.0
 
 - [ 機能追加 ] i タグに Font Awesome 以外のタグを追加できるように引数追加
