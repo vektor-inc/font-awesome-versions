@@ -162,7 +162,7 @@ class VkFontAwesomeVersions {
 		$versions = array(
 			'6_SVG_JS'       => array(
 				'label'   => '6 SVG with JS ( ' . __( 'Not recommended', 'font-awesome-versions' ) . ' )',
-				'version' => '6.340',
+				'version' => '6.4.0',
 				'type'    => 'svg-with-js',
 				/* [ Notice ] use editor css*/
 				'url_css' => $font_awesome_directory_uri . 'versions/6/css/all.min.css',
