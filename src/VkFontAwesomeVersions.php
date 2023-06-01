@@ -84,14 +84,12 @@ class VkFontAwesomeVersions {
 
 		$uri = '';
 
-		if ( ! $path ) {
+		if ( ! empty( $path ) ) {
 			// このファイルのパス.
 			$path = wp_normalize_path( dirname( __FILE__ ) );
+		} else {
+			$path = wp_normalize_path( $path );
 		}
-
-		// Windows 形式のパスを Linux 形式に変換
-		$path = str_replace( ':', '', $path );
-		$path = str_replace( '\\', '/', $path );
 
 		// ファイルのパスの wp-content より前の部分を site_url() に置換する
 		// ABSPATH の部分を site_url() に置換したいところだが、ABSPATHは WordPress.com で /wordpress/core/5.9.3/ のような返し方をされて、一般的なサーバーのパスとは異なるので、置換などには使用しない.
