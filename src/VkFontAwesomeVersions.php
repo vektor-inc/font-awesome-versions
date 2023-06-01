@@ -84,11 +84,11 @@ class VkFontAwesomeVersions {
 
 		$uri = '';
 
-		if ( ! empty( $path ) ) {
+		if ( ! empty( $path ) ) {			
+			$path = wp_normalize_path( $path );
+		} else {
 			// このファイルのパス.
 			$path = wp_normalize_path( dirname( __FILE__ ) );
-		} else {
-			$path = wp_normalize_path( $path );
 		}
 
 		// ファイルのパスの wp-content より前の部分を site_url() に置換する
