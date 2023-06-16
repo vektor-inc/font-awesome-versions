@@ -84,7 +84,9 @@ class VkFontAwesomeVersions {
 
 		$uri = '';
 
-		if ( ! $path ) {
+		if ( ! empty( $path ) ) {			
+			$path = wp_normalize_path( $path );
+		} else {
 			// このファイルのパス.
 			$path = wp_normalize_path( dirname( __FILE__ ) );
 		}
@@ -162,7 +164,7 @@ class VkFontAwesomeVersions {
 		$versions = array(
 			'6_SVG_JS'       => array(
 				'label'   => '6 SVG with JS ( ' . __( 'Not recommended', 'font-awesome-versions' ) . ' )',
-				'version' => '6.1.0',
+				'version' => '6.4.0',
 				'type'    => 'svg-with-js',
 				/* [ Notice ] use editor css*/
 				'url_css' => $font_awesome_directory_uri . 'versions/6/css/all.min.css',
@@ -170,7 +172,7 @@ class VkFontAwesomeVersions {
 			),
 			'6_WebFonts_CSS' => array(
 				'label'   => '6 Web Fonts with CSS',
-				'version' => '6.1.0',
+				'version' => '6.4.0',
 				'type'    => 'web-fonts-with-css',
 				'url_css' => $font_awesome_directory_uri . 'versions/6/css/all.min.css',
 				'url_js'  => '',

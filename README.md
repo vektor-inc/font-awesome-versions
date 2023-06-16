@@ -19,6 +19,10 @@ composer translate
 
 ## 使い方
 
+### Font Awesome 6 の更新
+
+`npm install` を実行後 `npm run build` を実行することでその時点の FontAwesome が自動的に適用されます。
+
 ### Font Awesome のファイル自体の読み込み
 
 以下のように書いた設定ファイルを読み込む
