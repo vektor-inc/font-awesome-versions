@@ -189,11 +189,12 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * 古いバージョンからの切り替え
-	 * 
+	 * Get Font Awesome Option
+	 *
 	 * @return string $current : current version slug
 	 */
-	public static function change_old_fa( $options ) {
+	public static function get_option_fa() {
+		$options = get_option( 'vk_font_awesome_version', self::$version_default );
 
 		// 5系の時の保存名が適切でなかったために補正している
 		if ( '5.0_WebFonts_CSS' === $options ) {
@@ -212,17 +213,7 @@ class VkFontAwesomeVersions {
 		}
 		
 		update_option( 'vk_font_awesome_version', $options );
-		return $options;
-	}
-
-	/**
-	 * Get Font Awesome Option
-	 *
-	 * @return string $current : current version slug
-	 */
-	public static function get_option_fa() {
-		$options = get_option( 'vk_font_awesome_version', self::$version_default );
-		$options = self::change_old_fa( $options );
+			
 		return $options;
 	}
 
