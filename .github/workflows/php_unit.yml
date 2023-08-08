@@ -55,5 +55,5 @@ jobs:
       run: npm run build
     - name: Run Environment
       run: npx wp-env start
-    - name: Run Environment
+    - name: PHP Unit Test
       run: npm run phpunit
