@@ -51,8 +51,6 @@ jobs:
         curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         chmod +x wp-cli.phar
         mv wp-cli.phar /usr/local/bin/wp
-    - name: Build
-      run: npm run build
     - name: Run Environment
       run: npx wp-env start
     - name: PHP Unit Test
