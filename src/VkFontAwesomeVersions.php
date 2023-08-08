@@ -177,21 +177,6 @@ class VkFontAwesomeVersions {
 				'url_css' => $font_awesome_directory_uri . 'versions/6/css/all.min.css',
 				'url_js'  => '',
 			),
-			'5_SVG_JS'       => array(
-				'label'   => '5 SVG with JS ( ' . __( 'Not recommended', 'font-awesome-versions' ) . ' )',
-				'version' => '5.15.4',
-				'type'    => 'svg-with-js',
-				/* [ Notice ] use editor css*/
-				'url_css' => $font_awesome_directory_uri . 'versions/5/css/all.min.css',
-				'url_js'  => $font_awesome_directory_uri . 'versions/5/js/all.min.js',
-			),
-			'5_WebFonts_CSS' => array(
-				'label'   => '5 Web Fonts with CSS',
-				'version' => '5.15.4',
-				'type'    => 'web-fonts-with-css',
-				'url_css' => $font_awesome_directory_uri . 'versions/5/css/all.min.css',
-				'url_js'  => '',
-			),
 			'4.7'            => array(
 				'label'   => '4.7 ( ' . __( 'Not recommended', 'font-awesome-versions' ) . ' )',
 				'version' => '4.7',
@@ -204,21 +189,41 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
+	 * 古いバージョンからの切り替え
+	 * 
+	 * @return string $current : current version slug
+	 */
+	public static function change_old_fa( $options ) {
+
+		// 5系の時の保存名が適切でなかったために補正している
+		if ( '5.0_WebFonts_CSS' === $options ) {
+			$options = '5_WebFonts_CSS';			
+			
+		} elseif ( '5.0_SVG_JS' === $options ) {
+			$options = '5_SVG_JS';			
+		}
+
+		// ６系と５系は互換があるようなので５系から６系に変更
+		if ( '5_WebFonts_CSS' === $options ) {
+			$options = '6_WebFonts_CSS';			
+			
+		} elseif ( '5_SVG_JS' === $options ) {
+			$options = '6_SVG_JS';			
+		}
+		
+		update_option( 'vk_font_awesome_version', $options );
+		return $options;
+	}
+
+	/**
 	 * Get Font Awesome Option
-	 * 5系の時の保存名が適切でなかったために補正している
 	 *
 	 * @return string $current : current version slug
 	 */
 	public static function get_option_fa() {
-		$current = get_option( 'vk_font_awesome_version', self::$version_default );
-		if ( '5.0_WebFonts_CSS' === $current ) {
-			update_option( 'vk_font_awesome_version', '5_WebFonts_CSS' );
-			$current = '5_WebFonts_CSS';
-		} elseif ( '5.0_SVG_JS' === $current ) {
-			update_option( 'vk_font_awesome_version', '5_SVG_JS' );
-			$current = '5_SVG_JS';
-		}
-		return $current;
+		$options = get_option( 'vk_font_awesome_version', self::$version_default );
+		$options = self::change_old_fa( $options );
+		return $options;
 	}
 
 	public static function current_info() {
@@ -244,14 +249,6 @@ class VkFontAwesomeVersions {
 				$icon_class = esc_attr( $example_class_array['v6'] );
 			} else {
 				$icon_class = 'fa-regular fa-file-lines';
-			}
-		} elseif ( '5_WebFonts_CSS' === $current_option || '5_SVG_JS' === $current_option ) {
-			$version = '5';
-			$link    = 'https://fontawesome.com/v5/search?m=free';
-			if ( ! empty( $example_class_array ['v5'] ) ) {
-				$icon_class = esc_attr( $example_class_array['v5'] );
-			} else {
-				$icon_class = 'far fa-file-alt';
 			}
 		} else {
 			$version = '4.7';
@@ -322,10 +319,6 @@ class VkFontAwesomeVersions {
 		$current_option = self::get_option_fa();
 		if ( '4.7' === $current_option ) {
 			$class[] = 'fa_v4';
-		} elseif ( '5_WebFonts_CSS' === $current_option ) {
-			$class[] = 'fa_v5_css';
-		} elseif ( '5_SVG_JS' === $current_option ) {
-			$class[] = 'fa_v5_svg';
 		} elseif ( '6_WebFonts_CSS' === $current_option ) {
 			$class[] = 'fa_v6_css';
 		} elseif ( '6_SVG_JS' === $current_option ) {
@@ -344,10 +337,6 @@ class VkFontAwesomeVersions {
 		$dynamic_css = '';
 		if ( '4.7' === $current ) {
 			$dynamic_css = '.tagcloud a:before { font-family:FontAwesome;content:"\f02b"; }';
-		} elseif ( '5_WebFonts_CSS' === $current ) {
-			$dynamic_css = '.tagcloud a:before { font-family: "Font Awesome 5 Free";content: "\f02b";font-weight: bold; }';
-		} elseif ( '5_SVG_JS' === $current ) {
-			$dynamic_css = '.tagcloud a:before { content:"" }';
 		} elseif ( '6_WebFonts_CSS' === $current ) {
 			$dynamic_css = '.tagcloud a:before { font-family: "Font Awesome 5 Free";content: "\f02b";font-weight: bold; }';
 		} elseif ( '6_SVG_JS' === $current ) {
@@ -376,8 +365,6 @@ class VkFontAwesomeVersions {
 		$current_option = self::get_option_fa();
 		if ( '6_WebFonts_CSS' === $current_option || '6_SVG_JS' === $current_option ) {
 			return $class_v6;
-		} elseif ( '5_WebFonts_CSS' === $current_option || '5_SVG_JS' === $current_option ) {
-			return $class_v5;
 		} else {
 			return $class_v4;
 		}
@@ -421,7 +408,7 @@ class VkFontAwesomeVersions {
 		$wp_customize->add_setting(
 			'vk_font_awesome_version',
 			array(
-				'default'           => '5_WebFonts_CSS',
+				'default'           => '6_WebFonts_CSS',
 				'type'              => 'option',
 				'capability'        => 'edit_theme_options',
 				'sanitize_callback' => 'sanitize_text_field',

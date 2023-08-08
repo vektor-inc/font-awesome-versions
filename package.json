@@ -4,8 +4,9 @@
     "phpunit": "composer install && npx wp-env run phpunit \"phpunit -c /var/www/html/wp-content/themes/lightning/vendor/font-awesome-versions/phpunit.xml.dist --verbose\""
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-free": "^6.4.0",
+    "@fortawesome/fontawesome-free": "^6.4.2",
     "gulp": "^4.0.2",
-    "gulp-replace": "^1.1.4"
+    "gulp-replace": "^1.1.4",
+    "npm-check-updates": "^16.10.18"
   }
 }
