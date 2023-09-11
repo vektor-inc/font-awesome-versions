@@ -63,4 +63,44 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 			$this->assertEquals( $value['correct'], $return );
 		}
 	}
+
+	function test_get_option_fa() {
+
+		$tests = array(
+			array(
+				'option_fa_version' => '4.7',
+				'correct'           => '4.7',
+			),
+			array(
+				'option_fa_version' => '5.0_WebFonts_CSS',
+				'correct'           => '6_WebFonts_CSS',
+			),
+			array(
+				'option_fa_version' => '5.0_SVG_JS',
+				'correct'           => '6_SVG_JS',
+			),
+			array(
+				'option_fa_version' => '5_WebFonts_CSS',
+				'correct'           => '6_WebFonts_CSS',
+			),
+			array(
+				'option_fa_version' => '5_SVG_JS',
+				'correct'           => '6_SVG_JS',
+			),
+			array(
+				'option_fa_version' => '6_WebFonts_CSS',
+				'correct'           => '6_WebFonts_CSS',
+			),
+			array(
+				'option_fa_version' => '6_SVG_JS',
+				'correct'           => '6_SVG_JS',
+			),
+		);
+
+		foreach ( $tests as $key => $value ) {
+			update_option( 'vk_font_awesome_version', $value['option_fa_version'] );
+			$return = VkFontAwesomeVersions::get_option_fa();
+			$this->assertEquals( $value['correct'], $return );
+		}
+	}
 }
