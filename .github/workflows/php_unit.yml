@@ -16,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: [7.4, 8.0, 8.1]
+        php-versions: ['7.4', '8.0', '8.1']
+        wp-versions: ['6.5','6.4','6.3']
     services:
       mysql:
         image: mysql:5.7
@@ -33,15 +34,15 @@ jobs:
       uses: actions/cache@v2
       with:
         path: vendor
-        key: ${{ runner.os }}-php${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
-    - name: Setup PHP ${{ matrix.php }}
+        key: ${{ runner.os }}-php${{ matrix.php-versions }}-${{ hashFiles('**/composer.lock') }}
+    - name: Setup PHP ${{ matrix.php-versions }}
       uses: shivammathur/setup-php@v2
       with:
-        php-version: ${{ matrix.php }}
-    - name: Setup Node 14.x
+        php-version: ${{ matrix.php-versions }}
+    - name: Setup Node 
       uses: actions/setup-node@v1
       with:
-        node-version: 14.x
+        node-version: 20.x
     - name: install npm scripts
       run: npm install
     - name: install Composer Package
@@ -51,7 +52,9 @@ jobs:
         curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         chmod +x wp-cli.phar
         mv wp-cli.phar /usr/local/bin/wp
-    - name: Run Environment
-      run: npx wp-env start
+    - name: Install several WordPress version by wp-env.override.json
+      run: WP_ENV_PHP_VERSION=${{ matrix.php-versions }} WP_ENV_CORE=WordPress/WordPress#${{ matrix.wp-versions }} npm run wp-env start --update
+    - name: Check WordPress Version
+      run: npm run wp-env run cli wp core version
     - name: PHP Unit Test
       run: npm run phpunit
