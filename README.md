@@ -90,6 +90,9 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+0.6.1
+- .woff2 もバイナリである事を明示
+
 0.6.0
 - [ 仕様変更 ] Font Awesome 6.5.2 に更新
 - [ その他 ] .gitattributes 追加
