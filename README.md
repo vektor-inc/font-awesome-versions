@@ -90,6 +90,9 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+0.6.2
+- font awesome アイコンデータデータ再度更新
+
 0.6.1
 - .woff2 もバイナリである事を明示
 
