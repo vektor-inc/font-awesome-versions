@@ -90,7 +90,9 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+0.6.0
 - [ 仕様変更 ] Font Awesome 6.5.2 に更新
+- [ その他 ] .gitattributes 追加
 
 0.5.0
 - [ 仕様変更 ] Font Awesome 5 は削除して Font Awesome 6 に自動移行
