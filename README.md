@@ -90,6 +90,8 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+- [ 仕様変更 ] Font Awesome 6.6.0 に更新
+
 0.6.2
 - font awesome アイコンデータデータ再度更新
 
