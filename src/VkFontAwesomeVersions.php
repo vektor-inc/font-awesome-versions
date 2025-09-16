@@ -235,7 +235,7 @@ class VkFontAwesomeVersions {
 		$current_option = self::get_option_fa();
 		if ( '6_WebFonts_CSS' === $current_option || '6_SVG_JS' === $current_option ) {
 			$version = '6';
-			$link    = 'https://fontawesome.com/icons?d=gallery&m=free';
+			$link    = 'https://fontawesome.com/search?ic=free&o=r';
 			if ( ! empty( $example_class_array ['v6'] ) ) {
 				$icon_class = esc_attr( $example_class_array['v6'] );
 			} else {
