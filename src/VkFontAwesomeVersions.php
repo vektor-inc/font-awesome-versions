@@ -382,6 +382,7 @@ class VkFontAwesomeVersions {
 	 */
 	public static function load_admin_font_awesome( $post ) {
 		$current = self::current_info();
+		$options = self::get_option_fa();
 		// ブロックエディタでこれがあるとコンソールでエラー吐かれるのでclassicエディタのときだけ読み込み.
 		if ( ! function_exists( 'use_block_editor_for_post' ) || ! use_block_editor_for_post( $post ) ) {
 			add_editor_style( $current['url_css'] );
@@ -402,6 +403,7 @@ class VkFontAwesomeVersions {
 	 */
 	public static function load_gutenberg_font_awesome() {
 		$current_info = self::current_info();
+		$options = self::get_option_fa();
 		wp_enqueue_style( 'gutenberg-font-awesome', $current_info['url_css'], array(), $current_info['version'] );
 		if ( ! empty( $options['compatibility']['v4'] ) ) {
 			wp_enqueue_style( 'gutenberg-font-awesome-v4-shims', $current_info['url_v4-shims_css'], array( 'gutenberg-font-awesome' ), $current_info['version'] );
