@@ -294,7 +294,8 @@ class VkFontAwesomeVersions {
 
 		// 存在しないキーが指定されても7系CSSにフォールバック
 		if ( empty( $versions[ $option ] ) ) {
-			$option = self::get_option_default()['version'];
+			$options = self::get_option_default();
+			$option  = $options['version'];
 		}
 
 		return $versions[ $option ];
