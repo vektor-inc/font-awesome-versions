@@ -521,7 +521,6 @@ class VkFontAwesomeVersions {
 				'label'       => __( 'Font Awesome Version', 'font-awesome-versions' ),
 				'section'     => 'VK Font Awesome',
 				'settings'    => 'vk_font_awesome_options[version]',
-				'description' => __( '4.7 will be abolished in the near future.', 'font-awesome-versions' ),
 				'type'        => 'select',
 				'priority'    => '',
 				'choices'     => $choices,
