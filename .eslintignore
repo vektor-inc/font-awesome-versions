@@ -1,0 +1,6 @@
+src/font-awesome/**
+src/languages/**
+node_modules/**
+vendor/**
+*.min.js
+*.min.css

@@ -1,6 +1,11 @@
 {
 	"core": null,
 	"mappings": {
-		"wp-content/themes/lightning/vendor/font-awesome-versions": "./"
+		"wp-content/plugins/vk-font-awesome-versions/": "./"
+	},
+	"config": {
+		"WP_DEBUG": true,
+		"SCRIPT_DEBUG": true,
+		"FS_METHOD": "direct"
 	}
-  }
+}
