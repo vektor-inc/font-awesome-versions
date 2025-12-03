@@ -313,7 +313,7 @@ class VkFontAwesomeVersions {
 
 		if ( '7_WebFonts_CSS' === $current_option['version'] || '7_SVG_JS' === $current_option['version'] ) {
 			$version = '7';
-			$link    = 'https://fontawesome.com/search?o=r';
+			$link    = 'https://fontawesome.com/search?ic=free-collection';
 			if ( ! empty( $example_class_array ['v7'] ) ) {
 				$icon_class = esc_attr( $example_class_array['v7'] );
 			} else {
