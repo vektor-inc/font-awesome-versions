@@ -328,7 +328,7 @@ class VkFontAwesomeVersions {
 		} else {
 			$ex_and_link .= esc_html( '<i class="' . $icon_class . '"></i>' );
 		}
-		$ex_and_link .= '<br>[ -> <a href="' . $link . '" target="_blank">' . __( 'Font Awesome Icon list', 'font-awesome-versions' ) . '</a> ]';
+		$ex_and_link .= '<br>[ -> <a href="' . $link . '" target="_blank" rel="noreferrer">' . __( 'Font Awesome Icon list', 'font-awesome-versions' ) . '</a> ]';
 
 		return wp_kses_post( $ex_and_link );
 	}
