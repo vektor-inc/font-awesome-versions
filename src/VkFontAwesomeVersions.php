@@ -313,7 +313,7 @@ class VkFontAwesomeVersions {
 
 		if ( '7_WebFonts_CSS' === $current_option['version'] || '7_SVG_JS' === $current_option['version'] ) {
 			$version = '7';
-			$link    = 'https://fontawesome.com/search?o=r';
+			$link    = 'https://fontawesome.com/search?ic=free-collection';
 			if ( ! empty( $example_class_array ['v7'] ) ) {
 				$icon_class = esc_attr( $example_class_array['v7'] );
 			} else {
@@ -328,7 +328,7 @@ class VkFontAwesomeVersions {
 		} else {
 			$ex_and_link .= esc_html( '<i class="' . $icon_class . '"></i>' );
 		}
-		$ex_and_link .= '<br>[ -> <a href="' . $link . '" target="_blank">' . __( 'Font Awesome Icon list', 'font-awesome-versions' ) . '</a> ]';
+		$ex_and_link .= '<br>[ -> <a href="' . $link . '" target="_blank" rel="noreferrer">' . __( 'Font Awesome Icon list', 'font-awesome-versions' ) . '</a> ]';
 
 		return wp_kses_post( $ex_and_link );
 	}
