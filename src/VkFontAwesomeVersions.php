@@ -316,10 +316,7 @@ class VkFontAwesomeVersions {
 	public static function get_option_compatibilities() {
 		$compatibilities = get_option( 'vk_font_awesome_compatibilities' );
 		if ( false === $compatibilities || ! is_array( $compatibilities ) ) {
-			$compatibilities = array(
-				'v4' => false,
-				'v5' => false,
-			);
+			$compatibilities = self::get_compatibilities_default();
 			update_option( 'vk_font_awesome_compatibilities', $compatibilities );
 		}
 		return $compatibilities;
