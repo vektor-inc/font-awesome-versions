@@ -42,11 +42,11 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 			),
 		);
 
-		foreach ( $tests as $key => $value ) {
-			update_option( 'vk_font_awesome_version', $value['option_fa_version'] );
-			update_option(
-				'vk_font_awesome_compatibilities',
-				array(
+			foreach ( $tests as $value ) {
+				update_option( 'vk_font_awesome_version', $value['option_fa_version'] );
+				update_option(
+					'vk_font_awesome_compatibilities',
+					array(
 					'v4' => false,
 					'v5' => false,
 				)

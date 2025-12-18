@@ -363,7 +363,6 @@ class VkFontAwesomeVersions {
 	 */
 	public static function load_font_awesome() {
 		$current         = self::current_info();
-		$options         = self::get_option_fa();
 		$compatibilities = self::get_option_compatibilities();
 		if ( 'svg-with-js' === $current['type'] ) {
 			wp_enqueue_script( 'vk-font-awesome-js', $current['url_js'], array(), $current['version'], false );
