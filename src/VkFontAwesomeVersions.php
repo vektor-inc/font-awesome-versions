@@ -486,21 +486,21 @@ class VkFontAwesomeVersions {
 		wp_add_inline_style( $vkfav_set_enqueue_handle_style, $dynamic_css );
 	}
 
-	/**
-	 * Select the icon class name for the currently active Font Awesome configuration.
-	 *
-	 * The plugin always normalizes the saved version to the current 7.x identifiers, so selection is
-	 * primarily driven by the enabled compatibility flags:
-	 * - v4 compatibility enabled → return `$class_v4`
-	 * - v5 compatibility enabled → return `$class_v5`
-	 * - otherwise → return `$class_v7` (or `$class_v6` as a fallback when provided)
-	 *
-	 * @param string $class_v4 Class name to use for Font Awesome 4.x (e.g., 4.7).
-	 * @param string $class_v5 Class name to use for Font Awesome 5.x.
-	 * @param string $class_v6 Class name to use for Font Awesome 6.x.
-	 * @param string $class_v7 Class name to use for Font Awesome 7.x.
-	 * @return string The selected class name; falls back to the v4 class when no other value is provided.
-	 */
+		/**
+		 * Select the icon class name for the currently active Font Awesome configuration.
+		 *
+		 * The plugin always normalizes the saved version to the current 7.x identifiers, so selection is
+		 * primarily driven by the enabled compatibility flags:
+		 * - v4 compatibility enabled → return `$class_v4` (takes precedence when both v4 and v5 are enabled)
+		 * - v5 compatibility enabled → return `$class_v5`
+		 * - otherwise → return `$class_v7` (or `$class_v6` as a fallback when provided)
+		 *
+		 * @param string $class_v4 Class name to use for Font Awesome 4.x (e.g., 4.7).
+		 * @param string $class_v5 Class name to use for Font Awesome 5.x.
+		 * @param string $class_v6 Class name to use for Font Awesome 6.x.
+		 * @param string $class_v7 Class name to use for Font Awesome 7.x.
+		 * @return string The selected class name; falls back to the v4 class when no other value is provided.
+		 */
 	public static function class_switch( $class_v4 = '', $class_v5 = '', $class_v6 = '', $class_v7 = '' ) {
 		$compatibilities = self::get_option_compatibilities();
 		if ( ! empty( $compatibilities['v4'] ) ) {
