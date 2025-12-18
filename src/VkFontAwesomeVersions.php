@@ -320,20 +320,20 @@ class VkFontAwesomeVersions {
 		return $current_info;
 	}
 
-	/**
-	 * Render a small HTML snippet showing an example Font Awesome icon and a link to the Font Awesome icon list.
-	 *
-	 * @param string $type Either 'class' to output the icon class string or any other value to output an HTML <i> tag example.
-	 * @param string[] $example_class_array Associative array of example classes keyed by version (e.g., ['v7' => 'fa-regular fa-file-lines']). If a version key is missing a default example is used.
-	 * @return string Sanitized HTML containing the example icon text and a link to the Font Awesome icon list.
-	 */
+		/**
+		 * Render a small HTML snippet showing an example Font Awesome icon and a link to the Font Awesome icon list.
+		 *
+		 * @param string   $type Either 'class' to output the icon class string or any other value to output an HTML <i> tag example.
+		 * @param string[] $example_class_array Associative array of example classes keyed by version (e.g., ['v7' => 'fa-regular fa-file-lines']). If a version key is missing a default example is used.
+		 * @return string Sanitized HTML containing the example icon text and a link to the Font Awesome icon list.
+		 */
 	public static function ex_and_link( $type = '', $example_class_array = array() ) {
 		$current_option = self::get_option_fa();
 
 		if ( '7_WebFonts_CSS' === $current_option || '7_SVG_JS' === $current_option ) {
 			$version = '7';
 			$link    = 'https://fontawesome.com/search?ic=free-collection';
-			if ( ! empty( $example_class_array ['v7'] ) ) {
+			if ( ! empty( $example_class_array['v7'] ) ) {
 				$icon_class = esc_attr( $example_class_array['v7'] );
 			} else {
 				$icon_class = 'fa-regular fa-file-lines';
@@ -416,14 +416,14 @@ class VkFontAwesomeVersions {
 		}
 	}
 
-	/ **
+	/**
 	 * Enqueue Font Awesome styles for the WordPress block editor and add compatibility styles when enabled.
 	 *
 	 * Enqueues the current Font Awesome CSS for the block editor and enqueues additional v4 shims/font-face
 	 * and v5 font-face styles if the corresponding compatibility flags are enabled.
 	 *
 	 * @return void
-	 * /
+	 */
 	public static function load_gutenberg_font_awesome() {
 		$current_info    = self::current_info();
 		$compatibilities = self::get_option_compatibilities();
