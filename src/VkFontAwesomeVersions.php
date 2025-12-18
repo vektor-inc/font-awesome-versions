@@ -246,25 +246,24 @@ class VkFontAwesomeVersions {
 	public static function get_option_fa() {
 
 		// 基本の保存値（実際に読み込むアセットのバージョン）
-		$version = get_option( 'vk_font_awesome_version' );
+		$version         = get_option( 'vk_font_awesome_version' );
 		$compatibilities = get_option( 'vk_font_awesome_compatibilities' );
 		if ( false === $compatibilities || ! is_array( $compatibilities ) ) {
 			$compatibilities = self::get_compatibilities_default();
 		}
 
-
 		// 4系は7系へ移行しつつ4系互換モードを有効化
 		if ( '4.7' === $version ) {
-			$version             = '7_WebFonts_CSS';
+			$version               = '7_WebFonts_CSS';
 			$compatibilities['v4'] = true;
 		}
 
 		// 5系は7系へ移行しつつ5系互換モードを有効化
 		if ( '5.0_WebFonts_CSS' === $version || '5_WebFonts_CSS' === $version ) {
-			$version             = '7_WebFonts_CSS';
+			$version               = '7_WebFonts_CSS';
 			$compatibilities['v5'] = true;
 		} elseif ( '5.0_SVG_JS' === $version || '5_SVG_JS' === $version ) {
-			$version             = '7_SVG_JS';
+			$version               = '7_SVG_JS';
 			$compatibilities['v5'] = true;
 		}
 
@@ -282,6 +281,11 @@ class VkFontAwesomeVersions {
 		return $version;
 	}
 
+	/**
+	 * Get Font Awesome compatibility options.
+	 *
+	 * @return array Compatibility flags by version.
+	 */
 	public static function get_option_compatibilities() {
 		$compatibilities = get_option( 'vk_font_awesome_compatibilities' );
 		if ( false === $compatibilities || ! is_array( $compatibilities ) ) {
@@ -358,13 +362,13 @@ class VkFontAwesomeVersions {
 	 * @return void
 	 */
 	public static function load_font_awesome() {
-		$current = self::current_info();
-		$options = self::get_option_fa();
+		$current         = self::current_info();
+		$options         = self::get_option_fa();
 		$compatibilities = self::get_option_compatibilities();
 		if ( 'svg-with-js' === $current['type'] ) {
-				wp_enqueue_script( 'vk-font-awesome-js', $current['url_js'], array(), $current['version'], false );
+			wp_enqueue_script( 'vk-font-awesome-js', $current['url_js'], array(), $current['version'], false );
 			if ( ! empty( $compatibilities['v4'] ) ) {
-					wp_enqueue_script( 'vk-font-awesome-v4-shims-js', $current['url_v4-shims_js'], array( 'vk-font-awesome-js' ), $current['version'], false );
+				wp_enqueue_script( 'vk-font-awesome-v4-shims-js', $current['url_v4-shims_js'], array( 'vk-font-awesome-js' ), $current['version'], false );
 			}
 			// [ Danger ] This script now causes important errors
 			// wp_add_inline_script( 'font-awesome-js', 'FontAwesomeConfig = { searchPseudoElements: true };', 'before' );
@@ -387,7 +391,7 @@ class VkFontAwesomeVersions {
 	 * @return void
 	 */
 	public static function load_admin_font_awesome( $post ) {
-		$current = self::current_info();
+		$current         = self::current_info();
 		$compatibilities = self::get_option_compatibilities();
 		// ブロックエディタでこれがあるとコンソールでエラー吐かれるのでclassicエディタのときだけ読み込み.
 		if ( ! function_exists( 'use_block_editor_for_post' ) || ! use_block_editor_for_post( $post ) ) {
@@ -408,7 +412,7 @@ class VkFontAwesomeVersions {
 	 * @return void
 	 */
 	public static function load_gutenberg_font_awesome() {
-		$current_info = self::current_info();
+		$current_info    = self::current_info();
 		$compatibilities = self::get_option_compatibilities();
 		wp_enqueue_style( 'gutenberg-font-awesome', $current_info['url_css'], array(), $current_info['version'] );
 		if ( ! empty( $compatibilities['v4'] ) ) {
@@ -537,17 +541,17 @@ class VkFontAwesomeVersions {
 				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
-		$wp_customize->add_control(
-			'vk_font_awesome_version',
-			array(
-				'label'       => __( 'Font Awesome Version', 'font-awesome-versions' ),
-				'section'     => 'VK Font Awesome',
-				'settings'    => 'vk_font_awesome_version',
-				'type'        => 'select',
-				'priority'    => '',
-				'choices'     => $choices,
-			)
-		);
+			$wp_customize->add_control(
+				'vk_font_awesome_version',
+				array(
+					'label'    => __( 'Font Awesome Version', 'font-awesome-versions' ),
+					'section'  => 'VK Font Awesome',
+					'settings' => 'vk_font_awesome_version',
+					'type'     => 'select',
+					'priority' => '',
+					'choices'  => $choices,
+				)
+			);
 
 		foreach ( $compatibilities as $key => $value ) {
 			$wp_customize->add_setting(
