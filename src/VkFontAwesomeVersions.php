@@ -344,14 +344,16 @@ class VkFontAwesomeVersions {
 	public static function ex_and_link( $type = '', $example_class_array = array() ) {
 		$current_option = self::get_option_fa();
 
-		if ( '7_WebFonts_CSS' === $current_option || '7_SVG_JS' === $current_option ) {
-			$version = '7';
-			$link    = 'https://fontawesome.com/search?ic=free-collection';
-			if ( ! empty( $example_class_array['v7'] ) ) {
-				$icon_class = esc_attr( $example_class_array['v7'] );
-			} else {
-				$icon_class = 'fa-regular fa-file-lines';
-			}
+		$version    = '7';
+		$link       = 'https://fontawesome.com/search?ic=free-collection';
+		$icon_class = 'fa-regular fa-file-lines';
+		if ( ! empty( $example_class_array['v7'] ) ) {
+			$icon_class = esc_attr( $example_class_array['v7'] );
+		}
+
+		if ( '7_WebFonts_CSS' !== $current_option && '7_SVG_JS' !== $current_option ) {
+			$version = '';
+			$link    = '';
 		}
 
 		$ex_and_link  = '<div style="margin-top:5px"><strong>Font Awesome ' . $version . '</strong></div>';
@@ -554,9 +556,10 @@ class VkFontAwesomeVersions {
 	 * Appearance → Customize and to reset icon fonts where Font Awesome is used.
 	 */
 	public static function old_notice() {
-		$old_notice     = '';
-		$current_option = get_option( 'vk_font_awesome_version' );
-		if ( '4.7' === $current_option ) {
+		$old_notice = '';
+		self::get_option_fa();
+		$compatibilities = self::get_option_compatibilities();
+		if ( ! empty( $compatibilities['v4'] ) ) {
 			$old_notice .= '<div class="error">';
 			$old_notice .= '<p>' . __( 'An older version of Font Awesome is selected. This version will be removed by August 2022.', 'font-awesome-versions' ) . '</p>';
 			$old_notice .= '<p>' . __( 'Please change the version of FontAwesome on the Appearance > Customize screen.', 'font-awesome-versions' ) . '</p>';
