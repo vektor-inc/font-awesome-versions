@@ -251,7 +251,10 @@ class VkFontAwesomeVersions {
 	public static function get_option_fa() {
 
 		// 基本の保存値（実際に読み込むアセットのバージョン）
-		$version         = get_option( 'vk_font_awesome_version' );
+		$version = get_option( 'vk_font_awesome_version' );
+		if ( false === $version || ! is_string( $version ) || '' === $version ) {
+			$version = self::get_version_default();
+		}
 		$compatibilities = get_option( 'vk_font_awesome_compatibilities' );
 		if ( false === $compatibilities || ! is_array( $compatibilities ) ) {
 			$compatibilities = self::get_compatibilities_default();
@@ -277,6 +280,11 @@ class VkFontAwesomeVersions {
 			$version = '7_WebFonts_CSS';
 		} elseif ( '6_SVG_JS' === $version ) {
 			$version = '7_SVG_JS';
+		}
+
+		$versions = self::versions();
+		if ( ! isset( $versions[ $version ] ) ) {
+			$version = self::get_version_default();
 		}
 
 		// 保存値が存在しない場合はデフォルトをセット
@@ -358,12 +366,11 @@ class VkFontAwesomeVersions {
 	 * @return string `'fa '` if the active Font Awesome version is `4.7`, otherwise an empty string.
 	 */
 	public static function print_fa() {
-		$fa             = '';
-		$current_option = self::get_option_fa();
-		if ( '4.7' === $current_option ) {
-			$fa = 'fa ';
+		$compatibilities = self::get_option_compatibilities();
+		if ( ! empty( $compatibilities['v4'] ) ) {
+			return 'fa ';
 		}
-		return $fa;
+		return '';
 	}
 
 	/**
@@ -480,23 +487,38 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Selects the icon class name that corresponds to the currently active Font Awesome version.
+	 * Select the icon class name for the currently active Font Awesome configuration.
+	 *
+	 * The plugin always normalizes the saved version to the current 7.x identifiers, so selection is
+	 * primarily driven by the enabled compatibility flags:
+	 * - v4 compatibility enabled → return `$class_v4`
+	 * - v5 compatibility enabled → return `$class_v5`
+	 * - otherwise → return `$class_v7` (or `$class_v6` as a fallback when provided)
 	 *
 	 * @param string $class_v4 Class name to use for Font Awesome 4.x (e.g., 4.7).
 	 * @param string $class_v5 Class name to use for Font Awesome 5.x.
 	 * @param string $class_v6 Class name to use for Font Awesome 6.x.
 	 * @param string $class_v7 Class name to use for Font Awesome 7.x.
-	 * @return string The class name matching the active Font Awesome version; falls back to the v4 class if the version is unrecognized.
+	 * @return string The selected class name; falls back to the v4 class when no other value is provided.
 	 */
 	public static function class_switch( $class_v4 = '', $class_v5 = '', $class_v6 = '', $class_v7 = '' ) {
-		$current_option = self::get_option_fa();
-		if ( '7_WebFonts_CSS' === $current_option || '7_SVG_JS' === $current_option ) {
-			return $class_v7;
-		} elseif ( '6_WebFonts_CSS' === $current_option || '6_SVG_JS' === $current_option ) {
-			return $class_v6;
-		} else {
+		$compatibilities = self::get_option_compatibilities();
+		if ( ! empty( $compatibilities['v4'] ) ) {
 			return $class_v4;
 		}
+		if ( ! empty( $compatibilities['v5'] ) ) {
+			return $class_v5;
+		}
+
+		if ( '' !== $class_v7 ) {
+			return $class_v7;
+		}
+
+		if ( '' !== $class_v6 ) {
+			return $class_v6;
+		}
+
+		return $class_v4;
 	}
 
 	/**
@@ -507,7 +529,7 @@ class VkFontAwesomeVersions {
 	 */
 	public static function old_notice() {
 		$old_notice     = '';
-		$current_option = self::get_option_fa();
+		$current_option = get_option( 'vk_font_awesome_version' );
 		if ( '4.7' === $current_option ) {
 			$old_notice .= '<div class="error">';
 			$old_notice .= '<p>' . __( 'An older version of Font Awesome is selected. This version will be removed by August 2022.', 'font-awesome-versions' ) . '</p>';
