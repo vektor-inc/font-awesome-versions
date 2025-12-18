@@ -20,15 +20,22 @@ class VkFontAwesomeVersions {
 	 *
 	 * @return array Default option values.
 	 */
-	public static function get_option_default() {
+	public static function get_version_default() {
+		$default = '7_WebFonts_CSS';
+		return apply_filters( 'vk_font_awesome_version_default', $default );
+	}
+
+	/**
+	 * Get default compatibility settings.
+	 *
+	 * @return array Default compatibility flags.
+	 */
+	public static function get_compatibilities_default() {
 		$default = array(
-			'version'       => '7_WebFonts_CSS',
-			'compatibility' => array(
-				'v4' => false,
-				'v5' => false,
-			),
+			'v4' => false,
+			'v5' => false,
 		);
-		return apply_filters( 'vk_font_awesome_option_default', $default );
+		return apply_filters( 'vk_font_awesome_compatibilities_default', $default );
 	}
 
 	/**
@@ -240,40 +247,51 @@ class VkFontAwesomeVersions {
 
 		// 基本の保存値（実際に読み込むアセットのバージョン）
 		$version = get_option( 'vk_font_awesome_version' );
-		$options = get_option( 'vk_font_awesome_options', self::get_option_default() );
-
-		// 古い保存値が残っている場合のマイグレーション対応
-		if ( ! empty( $version ) && empty( $options['version'] ) ) {
-			$options['version'] = $version;
-			delete_option( 'vk_font_awesome_version' );
+		$compatibilities = get_option( 'vk_font_awesome_compatibilities' );
+		if ( false === $compatibilities || ! is_array( $compatibilities ) ) {
+			$compatibilities = self::get_compatibilities_default();
 		}
 
+
 		// 4系は7系へ移行しつつ4系互換モードを有効化
-		if ( '4.7' === $options['version'] ) {
-			$options['version']             = '7_WebFonts_CSS';
-			$options['compatibility']['v4'] = true;
+		if ( '4.7' === $version ) {
+			$version             = '7_WebFonts_CSS';
+			$compatibilities['v4'] = true;
 		}
 
 		// 5系は7系へ移行しつつ5系互換モードを有効化
-		if ( '5.0_WebFonts_CSS' === $options['version'] || '5_WebFonts_CSS' === $options['version'] ) {
-			$options['version']             = '7_WebFonts_CSS';
-			$options['compatibility']['v5'] = true;
-		} elseif ( '5.0_SVG_JS' === $options['version'] || '5_SVG_JS' === $options['version'] ) {
-			$options['version']             = '7_SVG_JS';
-			$options['compatibility']['v5'] = true;
+		if ( '5.0_WebFonts_CSS' === $version || '5_WebFonts_CSS' === $version ) {
+			$version             = '7_WebFonts_CSS';
+			$compatibilities['v5'] = true;
+		} elseif ( '5.0_SVG_JS' === $version || '5_SVG_JS' === $version ) {
+			$version             = '7_SVG_JS';
+			$compatibilities['v5'] = true;
 		}
 
 		// ６系は７系へ移行
-		if ( '6_WebFonts_CSS' === $options['version'] ) {
-			$options['version'] = '7_WebFonts_CSS';
-		} elseif ( '6_SVG_JS' === $options['version'] ) {
-			$options['version'] = '7_SVG_JS';
+		if ( '6_WebFonts_CSS' === $version ) {
+			$version = '7_WebFonts_CSS';
+		} elseif ( '6_SVG_JS' === $version ) {
+			$version = '7_SVG_JS';
 		}
 
 		// 保存値が存在しない場合はデフォルトをセット
-		update_option( 'vk_font_awesome_options', $options );
+		update_option( 'vk_font_awesome_version', $version );
+		update_option( 'vk_font_awesome_compatibilities', $compatibilities );
 
-		return $options;
+		return $version;
+	}
+
+	public static function get_option_compatibilities() {
+		$compatibilities = get_option( 'vk_font_awesome_compatibilities' );
+		if ( false === $compatibilities || ! is_array( $compatibilities ) ) {
+			$compatibilities = array(
+				'v4' => false,
+				'v5' => false,
+			);
+			update_option( 'vk_font_awesome_compatibilities', $compatibilities );
+		}
+		return $compatibilities;
 	}
 
 	/**
@@ -282,23 +300,10 @@ class VkFontAwesomeVersions {
 	 * @return array Asset info for the active version.
 	 */
 	public static function current_info() {
-		// アセット読み込み用の実バージョンを算出
-		$versions = self::versions();
-		$option   = get_option( 'vk_font_awesome_options', self::get_option_default() );
-
-		if ( '7_WebFonts_CSS' === $option['version'] ) {
-			$option = '7_WebFonts_CSS';
-		} elseif ( '7_SVG_JS' === $option['version'] ) {
-			$option = '7_SVG_JS';
-		}
-
-		// 存在しないキーが指定されても7系CSSにフォールバック
-		if ( empty( $versions[ $option ] ) ) {
-			$options = self::get_option_default();
-			$option  = $options['version'];
-		}
-
-		return $versions[ $option ];
+		$versions       = self::versions();
+		$current_option = self::get_option_fa();
+		$current_info   = $versions[ $current_option ];
+		return $current_info;
 	}
 
 	/**
@@ -311,7 +316,7 @@ class VkFontAwesomeVersions {
 	public static function ex_and_link( $type = '', $example_class_array = array() ) {
 		$current_option = self::get_option_fa();
 
-		if ( '7_WebFonts_CSS' === $current_option['version'] || '7_SVG_JS' === $current_option['version'] ) {
+		if ( '7_WebFonts_CSS' === $current_option || '7_SVG_JS' === $current_option ) {
 			$version = '7';
 			$link    = 'https://fontawesome.com/search?ic=free-collection';
 			if ( ! empty( $example_class_array ['v7'] ) ) {
@@ -341,7 +346,7 @@ class VkFontAwesomeVersions {
 	public static function print_fa() {
 		$fa             = '';
 		$current_option = self::get_option_fa();
-		if ( '4.7' === $current_option['version'] ) {
+		if ( '4.7' === $current_option ) {
 			$fa = 'fa ';
 		}
 		return $fa;
@@ -355,20 +360,21 @@ class VkFontAwesomeVersions {
 	public static function load_font_awesome() {
 		$current = self::current_info();
 		$options = self::get_option_fa();
+		$compatibilities = self::get_option_compatibilities();
 		if ( 'svg-with-js' === $current['type'] ) {
 				wp_enqueue_script( 'vk-font-awesome-js', $current['url_js'], array(), $current['version'], false );
-			if ( ! empty( $options['compatibility']['v4'] ) ) {
+			if ( ! empty( $compatibilities['v4'] ) ) {
 					wp_enqueue_script( 'vk-font-awesome-v4-shims-js', $current['url_v4-shims_js'], array( 'vk-font-awesome-js' ), $current['version'], false );
 			}
 			// [ Danger ] This script now causes important errors
 			// wp_add_inline_script( 'font-awesome-js', 'FontAwesomeConfig = { searchPseudoElements: true };', 'before' );
 		} else {
 			wp_enqueue_style( 'vk-font-awesome', $current['url_css'], array(), $current['version'] );
-			if ( ! empty( $options['compatibility']['v4'] ) ) {
+			if ( ! empty( $compatibilities['v4'] ) ) {
 				wp_enqueue_style( 'vk-font-awesome-v4-shims', $current['url_v4-shims_css'], array( 'vk-font-awesome' ), $current['version'] );
 				wp_enqueue_style( 'vk-font-awesome-v4-font-face', $current['url_v4-font-face_css'], array( 'vk-font-awesome' ), $current['version'] );
 			}
-			if ( ! empty( $options['compatibility']['v5'] ) ) {
+			if ( ! empty( $compatibilities['v5'] ) ) {
 				wp_enqueue_style( 'vk-font-awesome-v5-font-face', $current['url_v5-font-face_css'], array( 'vk-font-awesome' ), $current['version'] );
 			}
 		}
@@ -382,15 +388,15 @@ class VkFontAwesomeVersions {
 	 */
 	public static function load_admin_font_awesome( $post ) {
 		$current = self::current_info();
-		$options = self::get_option_fa();
+		$compatibilities = self::get_option_compatibilities();
 		// ブロックエディタでこれがあるとコンソールでエラー吐かれるのでclassicエディタのときだけ読み込み.
 		if ( ! function_exists( 'use_block_editor_for_post' ) || ! use_block_editor_for_post( $post ) ) {
 			add_editor_style( $current['url_css'] );
-			if ( ! empty( $options['compatibility']['v4'] ) ) {
+			if ( ! empty( $compatibilities['v4'] ) ) {
 				add_editor_style( $current['url_v4-shims_css'] );
 				add_editor_style( $current['url_v4-font-face_css'] );
 			}
-			if ( ! empty( $options['compatibility']['v5'] ) ) {
+			if ( ! empty( $compatibilities['v5'] ) ) {
 				add_editor_style( $current['url_v5-font-face_css'] );
 			}
 		}
@@ -403,13 +409,13 @@ class VkFontAwesomeVersions {
 	 */
 	public static function load_gutenberg_font_awesome() {
 		$current_info = self::current_info();
-		$options = self::get_option_fa();
+		$compatibilities = self::get_option_compatibilities();
 		wp_enqueue_style( 'gutenberg-font-awesome', $current_info['url_css'], array(), $current_info['version'] );
-		if ( ! empty( $options['compatibility']['v4'] ) ) {
+		if ( ! empty( $compatibilities['v4'] ) ) {
 			wp_enqueue_style( 'gutenberg-font-awesome-v4-shims', $current_info['url_v4-shims_css'], array( 'gutenberg-font-awesome' ), $current_info['version'] );
 			wp_enqueue_style( 'gutenberg-font-awesome-v4-font-face', $current_info['url_v4-font-face_css'], array( 'gutenberg-font-awesome' ), $current_info['version'] );
 		}
-		if ( ! empty( $options['compatibility']['v5'] ) ) {
+		if ( ! empty( $compatibilities['v5'] ) ) {
 			wp_enqueue_style( 'gutenberg-font-awesome-v5-font-face', $current_info['url_v5-font-face_css'], array( 'gutenberg-font-awesome' ), $current_info['version'] );
 		}
 	}
@@ -422,9 +428,9 @@ class VkFontAwesomeVersions {
 	 */
 	public static function add_body_class_fa_version( $classes ) {
 		$current_option = self::get_option_fa();
-		if ( '7_WebFonts_CSS' === $current_option['version'] ) {
+		if ( '7_WebFonts_CSS' === $current_option ) {
 			$classes[] = 'fa_v7_css';
-		} elseif ( '7_SVG_JS' === $current_option['version'] ) {
+		} elseif ( '7_SVG_JS' === $current_option ) {
 			$classes[] = 'fa_v7_svg';
 		}
 
@@ -439,9 +445,9 @@ class VkFontAwesomeVersions {
 	public static function dynamic_css() {
 		$current     = self::get_option_fa();
 		$dynamic_css = '';
-		if ( '7_WebFonts_CSS' === $current['version'] ) {
+		if ( '7_WebFonts_CSS' === $current ) {
 			$dynamic_css = '.tagcloud a:before { font-family: "Font Awesome 7 Free";content: "\f02b";font-weight: bold; }';
-		} elseif ( '7_SVG_JS' === $current['version'] ) {
+		} elseif ( '7_SVG_JS' === $current ) {
 			$dynamic_css = '.tagcloud a:before { content:"" }';
 		}
 		// delete before after space.
@@ -466,9 +472,9 @@ class VkFontAwesomeVersions {
 	 */
 	public static function class_switch( $class_v4 = '', $class_v5 = '', $class_v6 = '', $class_v7 = '' ) {
 		$current_option = self::get_option_fa();
-		if ( '7_WebFonts_CSS' === $current_option['version'] || '7_SVG_JS' === $current_option['version'] ) {
+		if ( '7_WebFonts_CSS' === $current_option || '7_SVG_JS' === $current_option ) {
 			return $class_v7;
-		} elseif ( '6_WebFonts_CSS' === $current_option['version'] || '6_SVG_JS' === $current_option['version'] ) {
+		} elseif ( '6_WebFonts_CSS' === $current_option || '6_SVG_JS' === $current_option ) {
 			return $class_v6;
 		} else {
 			return $class_v4;
@@ -483,7 +489,7 @@ class VkFontAwesomeVersions {
 	public static function old_notice() {
 		$old_notice     = '';
 		$current_option = self::get_option_fa();
-		if ( '4.7' === $current_option['version'] ) {
+		if ( '4.7' === $current_option ) {
 			$old_notice .= '<div class="error">';
 			$old_notice .= '<p>' . __( 'An older version of Font Awesome is selected. This version will be removed by August 2022.', 'font-awesome-versions' ) . '</p>';
 			$old_notice .= '<p>' . __( 'Please change the version of FontAwesome on the Appearance > Customize screen.', 'font-awesome-versions' ) . '</p>';
@@ -523,7 +529,7 @@ class VkFontAwesomeVersions {
 		);
 
 		$wp_customize->add_setting(
-			'vk_font_awesome_options[version]',
+			'vk_font_awesome_version',
 			array(
 				'default'           => '7_WebFonts_CSS',
 				'type'              => 'option',
@@ -532,11 +538,11 @@ class VkFontAwesomeVersions {
 			)
 		);
 		$wp_customize->add_control(
-			'vk_font_awesome_options[version]',
+			'vk_font_awesome_version',
 			array(
 				'label'       => __( 'Font Awesome Version', 'font-awesome-versions' ),
 				'section'     => 'VK Font Awesome',
-				'settings'    => 'vk_font_awesome_options[version]',
+				'settings'    => 'vk_font_awesome_version',
 				'type'        => 'select',
 				'priority'    => '',
 				'choices'     => $choices,
@@ -545,7 +551,7 @@ class VkFontAwesomeVersions {
 
 		foreach ( $compatibilities as $key => $value ) {
 			$wp_customize->add_setting(
-				'vk_font_awesome_options[compatibility][' . $key . ']',
+				'vk_font_awesome_compatibilities[' . $key . ']',
 				array(
 					'default'           => false,
 					'type'              => 'option',
@@ -554,11 +560,11 @@ class VkFontAwesomeVersions {
 				)
 			);
 			$wp_customize->add_control(
-				'vk_font_awesome_options[compatibility][' . $key . ']',
+				'vk_font_awesome_compatibilities[' . $key . ']',
 				array(
 					'label'       => $value['label'],
 					'section'     => 'VK Font Awesome',
-					'settings'    => 'vk_font_awesome_options[compatibility][' . $key . ']',
+					'settings'    => 'vk_font_awesome_compatibilities[' . $key . ']',
 					'description' => $value['note'],
 					'type'        => 'checkbox',
 					'priority'    => '',

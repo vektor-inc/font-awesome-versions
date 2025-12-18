@@ -28,6 +28,20 @@ if ( ! $_tests_dir ) {
 	$_tests_dir = '/tmp/wordpress-tests-lib';
 }
 
+// Provide sane defaults when not defined by wp-tests-config.php (e.g. when running via wp-phpunit).
+if ( ! defined( 'WP_TESTS_DOMAIN' ) ) {
+	define( 'WP_TESTS_DOMAIN', 'example.org' );
+}
+if ( ! defined( 'WP_TESTS_EMAIL' ) ) {
+	define( 'WP_TESTS_EMAIL', 'admin@example.org' );
+}
+if ( ! defined( 'WP_TESTS_TITLE' ) ) {
+	define( 'WP_TESTS_TITLE', 'Test Blog' );
+}
+if ( ! defined( 'WP_PHP_BINARY' ) ) {
+	define( 'WP_PHP_BINARY', PHP_BINARY );
+}
+
 // Give access to tests_add_filter() function.
 require_once $_tests_dir . '/includes/functions.php';
 

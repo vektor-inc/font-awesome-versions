@@ -90,6 +90,8 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+- [ バグ修正 ] 新しい状態で保存したデータを古い方で読もうとすると Fatal Error になるのを回避
+
 0.7.0
 - [ 仕様変更 ] Font Awesome を 7.1.0 に更新
 - [ 仕様変更 ] ４系・６系を削除して７系を使用するように変更
