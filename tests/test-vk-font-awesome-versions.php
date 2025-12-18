@@ -3,7 +3,7 @@ use VektorInc\VK_Font_Awesome_Versions\VkFontAwesomeVersions;
 
 class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 
-	public function setUp() {
+	public function setUp(): void {
 		parent::setUp();
 		delete_option( 'vk_font_awesome_version' );
 		delete_option( 'vk_font_awesome_compatibilities' );
