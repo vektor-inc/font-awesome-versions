@@ -251,14 +251,19 @@ class VkFontAwesomeVersions {
 	public static function get_option_fa() {
 
 		// 基本の保存値（実際に読み込むアセットのバージョン）
-		$version = get_option( 'vk_font_awesome_version' );
+		$stored_version         = get_option( 'vk_font_awesome_version' );
+		$stored_compatibilities = get_option( 'vk_font_awesome_compatibilities' );
+
+		$version = $stored_version;
 		if ( false === $version || ! is_string( $version ) || '' === $version ) {
 			$version = self::get_version_default();
 		}
-		$compatibilities = get_option( 'vk_font_awesome_compatibilities' );
+
+		$compatibilities = $stored_compatibilities;
 		if ( false === $compatibilities || ! is_array( $compatibilities ) ) {
 			$compatibilities = self::get_compatibilities_default();
 		}
+		$compatibilities = wp_parse_args( $compatibilities, self::get_compatibilities_default() );
 
 		// 4系は7系へ移行しつつ4系互換モードを有効化
 		if ( '4.7' === $version ) {
@@ -287,9 +292,13 @@ class VkFontAwesomeVersions {
 			$version = self::get_version_default();
 		}
 
-		// 保存値が存在しない場合はデフォルトをセット
-		update_option( 'vk_font_awesome_version', $version );
-		update_option( 'vk_font_awesome_compatibilities', $compatibilities );
+		// Persist only when normalization changed the stored values to avoid unnecessary DB writes.
+		if ( $stored_version !== $version ) {
+			update_option( 'vk_font_awesome_version', $version );
+		}
+		if ( ! is_array( $stored_compatibilities ) || $stored_compatibilities !== $compatibilities ) {
+			update_option( 'vk_font_awesome_compatibilities', $compatibilities );
+		}
 
 		return $version;
 	}
