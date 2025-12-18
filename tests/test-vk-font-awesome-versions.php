@@ -3,6 +3,13 @@ use VektorInc\VK_Font_Awesome_Versions\VkFontAwesomeVersions;
 
 class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 
+	/**
+	 * Prepare the test environment by clearing Vk Font Awesome related options.
+	 *
+	 * This setup runs before each test and ensures the options
+	 * `vk_font_awesome_version`, `vk_font_awesome_compatibilities`, and
+	 * `vk_font_awesome_options` are removed so tests start from a clean state.
+	 */
 	public function setUp(): void {
 		parent::setUp();
 		delete_option( 'vk_font_awesome_version' );
@@ -11,7 +18,10 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test get_icon_tag() method
+	 * Verifies VkFontAwesomeVersions::get_icon_tag() produces the expected <i> HTML for various saved values and additional classes.
+	 *
+	 * Tests scenarios where the saved icon value is either a class string or a full `<i>` tag, with and without an extra CSS class,
+	 * while font-awesome compatibility options are set to v4 and v5 as false.
 	 *
 	 * @return void
 	 */
@@ -163,6 +173,11 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 		}
 	}
 
+	/**
+	 * Verifies that class_switch selects the v7 class when Font Awesome version is set to 7 and v4/v5 compatibilities are disabled.
+	 *
+	 * Sets the vk_font_awesome_version option to '7_WebFonts_CSS', ensures v4 and v5 compatibilities are false, calls VkFontAwesomeVersions::class_switch with v4–v7 candidates, and asserts the selected class is 'v7'.
+	 */
 	function test_class_switch_returns_v7_class() {
 		update_option( 'vk_font_awesome_version', '7_WebFonts_CSS' );
 		update_option(
