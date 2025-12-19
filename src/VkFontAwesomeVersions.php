@@ -295,7 +295,7 @@ class VkFontAwesomeVersions {
 		if ( $stored_version !== $version ) {
 			update_option( 'vk_font_awesome_version', $version );
 		}
-		if ( ! is_array( $stored_compatibilities ) || $stored_compatibilities !== $compatibilities ) {
+		if ( $stored_compatibilities !== $compatibilities ) {
 			update_option( 'vk_font_awesome_compatibilities', $compatibilities );
 		}
 
