@@ -546,17 +546,17 @@ class VkFontAwesomeVersions {
 				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
-			$wp_customize->add_control(
-				'vk_font_awesome_version',
-				array(
-					'label'    => __( 'Font Awesome Version', 'font-awesome-versions' ),
-					'section'  => 'VK Font Awesome',
-					'settings' => 'vk_font_awesome_version',
-					'type'     => 'select',
-					'priority' => '',
-					'choices'  => $choices,
-				)
-			);
+		$wp_customize->add_control(
+			'vk_font_awesome_version',
+			array(
+				'label'    => __( 'Font Awesome Version', 'font-awesome-versions' ),
+				'section'  => 'VK Font Awesome',
+				'settings' => 'vk_font_awesome_version',
+				'type'     => 'select',
+				'priority' => '',
+				'choices'  => $choices,
+			)
+		);
 
 		foreach ( $compatibilities as $key => $value ) {
 			$wp_customize->add_setting(
