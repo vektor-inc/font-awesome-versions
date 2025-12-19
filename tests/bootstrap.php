@@ -42,6 +42,16 @@ if ( ! defined( 'WP_PHP_BINARY' ) ) {
 	define( 'WP_PHP_BINARY', PHP_BINARY );
 }
 
+/**
+ * If the WordPress test suite is unavailable (or explicitly disabled),
+ * fall back to lightweight stubs so PHPUnit can run in standalone mode.
+ */
+$use_wp_suite = getenv( 'USE_WP_TEST_SUITE' );
+if ( empty( $use_wp_suite ) || ! file_exists( $_tests_dir . '/includes/bootstrap.php' ) ) {
+	require __DIR__ . '/wp-stubs.php';
+	return;
+}
+
 // Give access to tests_add_filter() function.
 require_once $_tests_dir . '/includes/functions.php';
 

@@ -174,9 +174,10 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Verifies that class_switch selects the v7 class when Font Awesome version is set to 7 and v4/v5 compatibilities are disabled.
+	 * Verifies that class_switch selects the provided v7 class when using the two-argument signature.
 	 *
-	 * Sets the vk_font_awesome_version option to '7_WebFonts_CSS', ensures v4 and v5 compatibilities are false, calls VkFontAwesomeVersions::class_switch with v4–v7 candidates, and asserts the selected class is 'v7'.
+	 * Sets the vk_font_awesome_version option to '7_WebFonts_CSS', ensures v4 and v5 compatibilities are false,
+	 * calls VkFontAwesomeVersions::class_switch with v4 and v7 candidates, and asserts the selected class is 'v7'.
 	 */
 	function test_class_switch_returns_v7_class() {
 		update_option( 'vk_font_awesome_version', '7_WebFonts_CSS' );
@@ -188,7 +189,7 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 			)
 		);
 
-		$return = VkFontAwesomeVersions::class_switch( 'v4', 'v5', 'v6', 'v7' );
+		$return = VkFontAwesomeVersions::class_switch( 'v4', 'v7' );
 		$this->assertEquals( 'v7', $return );
 	}
 }
