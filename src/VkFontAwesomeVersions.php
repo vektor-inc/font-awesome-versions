@@ -67,7 +67,6 @@ class VkFontAwesomeVersions {
 		 * to be able to change the action hook point of css load from theme..
 		 */
 		add_action( 'after_setup_theme', array( __CLASS__, 'load_css_action' ) );
-		add_action( 'admin_notices', array( __CLASS__, 'old_notice' ) );
 
 		add_action( 'customize_register', array( __CLASS__, 'customize_register' ) );
 
@@ -497,77 +496,14 @@ class VkFontAwesomeVersions {
 	/**
 	 * Select the icon class name for the currently active Font Awesome configuration.
 	 *
-	 * The plugin always normalizes the saved version to the current 7.x identifiers, so selection is
-	 * primarily driven by the enabled compatibility flags:
-	 * - v4 compatibility enabled -> return `$class_v4` (takes precedence when both v4 and v5 are enabled)
-	 * - v5 compatibility enabled -> return `$class_v5`
-	 * - otherwise                -> return `$class_v7`
-	 *
-	 * In "pure v7" mode (v4/v5 compatibility disabled), callers are expected to pass `$class_v7`. If
-	 * `$class_v7` is empty this method will return `$class_v6` when provided; otherwise it will return
-	 * an empty string and trigger a warning via `_doing_it_wrong()` (or a user-level notice when
-	 * unavailable) rather than falling back to v4.
-	 *
 	 * @param string $class_v4 Class name to use for Font Awesome 4.x (e.g., 4.7).
-	 * @param string $class_v5 Class name to use for Font Awesome 5.x.
-	 * @param string $class_v6 Class name to use for Font Awesome 6.x (optional fallback in pure v7 mode).
 	 * @param string $class_v7 Class name to use for Font Awesome 7.x.
 	 * @return string The selected class name, or an empty string when no suitable class was provided.
 	 */
-	public static function class_switch( $class_v4 = '', $class_v5 = '', $class_v6 = '', $class_v7 = '' ) {
-		$compatibilities = self::get_option_compatibilities();
-		if ( ! empty( $compatibilities['v4'] ) ) {
-			return $class_v4;
-		}
-		if ( ! empty( $compatibilities['v5'] ) ) {
-			return $class_v5;
-		}
-
-		if ( '' !== $class_v7 ) {
-			return $class_v7;
-		}
-
-		if ( '' !== $class_v6 ) {
-			if ( function_exists( '_doing_it_wrong' ) ) {
-				_doing_it_wrong(
-					__METHOD__,
-					'In pure v7 mode, $class_v7 should be provided; falling back to $class_v6.',
-					'0.7.0'
-				);
-			}
-			return $class_v6;
-		}
-
-		if ( function_exists( '_doing_it_wrong' ) ) {
-			_doing_it_wrong(
-				__METHOD__,
-				'No suitable class was provided for the current Font Awesome configuration.',
-				'0.7.0'
-			);
-		}
-
-		return '';
+	public static function class_switch( $class_v4 = '', $class_v7 = '' ) {
+		return $class_v7;
 	}
 
-	/**
-	 * Display an admin notice when the selected Font Awesome version is 4.7.
-	 *
-	 * The notice advises administrators to change the Font Awesome version in
-	 * Appearance → Customize and to reset icon fonts where Font Awesome is used.
-	 */
-	public static function old_notice() {
-		$old_notice = '';
-		self::get_option_fa();
-		$compatibilities = self::get_option_compatibilities();
-		if ( ! empty( $compatibilities['v4'] ) ) {
-			$old_notice .= '<div class="error">';
-			$old_notice .= '<p>' . __( 'An older version of Font Awesome is selected. This version will be removed by August 2022.', 'font-awesome-versions' ) . '</p>';
-			$old_notice .= '<p>' . __( 'Please change the version of FontAwesome on the Appearance > Customize screen.', 'font-awesome-versions' ) . '</p>';
-			$old_notice .= '<p>' . __( '* It is necessary to reset the icon font in the place where Font Awesome is used.', 'font-awesome-versions' ) . '</p>';
-			$old_notice .= '</div>';
-		}
-		echo wp_kses_post( $old_notice );
-	}
 
 	/**
 	 * Register the Font Awesome settings, controls, and section in the WordPress Customizer.
