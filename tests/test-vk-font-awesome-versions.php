@@ -83,6 +83,11 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 		}
 	}
 
+	/**
+	 * Verifies that get_option_compatibilities() returns and saves default compatibilities when the option is absent.
+	 *
+	 * @return void
+	 */
 	function test_get_option_compatibilities_default() {
 		delete_option( 'vk_font_awesome_compatibilities' );
 
@@ -97,6 +102,15 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 		$this->assertEquals( $return, get_option( 'vk_font_awesome_compatibilities' ) );
 	}
 
+	/**
+	 * Verify that get_option_fa() normalizes stored FA version values and updates compatibility options.
+	 *
+	 * Iterates several stored `vk_font_awesome_version` inputs, calls VkFontAwesomeVersions::get_option_fa(),
+	 * and asserts the returned canonical version, the saved `vk_font_awesome_version` option, and the
+	 * `vk_font_awesome_compatibilities` option match expected values for each case.
+	 *
+	 * @return void
+	 */
 	function test_get_option_fa() {
 		$tests = array(
 			array(

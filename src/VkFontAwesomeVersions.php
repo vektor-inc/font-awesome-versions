@@ -28,7 +28,7 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Provide the default compatibility flags for Font Awesome v4 and v5.
+	 * Get the default compatibility flags for Font Awesome major versions 4 and 5.
 	 *
 	 * @return array Associative array with keys 'v4' and 'v5' where each value is `true` if compatibility for that major version is enabled, `false` otherwise.
 	 */
@@ -48,9 +48,11 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Initialise
+	 * Register WordPress hooks required for plugin initialization.
 	 *
-	 * @return void
+	 * Sets up textdomain loading and registers hooks for determining the CSS enqueue point,
+	 * Customizer controls, admin and block-editor asset loading, injection of small dynamic
+	 * inline CSS into the page head, and adding a Font Awesome version class to the body.
 	 */
 	public static function init() {
 		/**
@@ -303,10 +305,9 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Return the stored Font Awesome compatibility flags, creating defaults if absent.
+	 * Ensure the vk_font_awesome_compatibilities option exists and return its flags.
 	 *
-	 * Ensures the option `vk_font_awesome_compatibilities` exists and returns an associative array
-	 * with keys for each supported compatibility flag.
+	 * If the option is missing or invalid, it is initialized with the default compatibility flags.
 	 *
 	 * @return array Associative array with keys:
 	 *               - `v4`: `true` if v4 compatibility is enabled, `false` otherwise.
@@ -322,9 +323,9 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Get current asset info for the selected FA version.
+	 * Retrieve metadata for the currently selected Font Awesome version.
 	 *
-	 * @return array Asset info for the active version.
+	 * @return array Associative array of asset URLs and related metadata for the active version.
 	 */
 	public static function current_info() {
 		$versions       = self::versions();
@@ -334,12 +335,12 @@ class VkFontAwesomeVersions {
 	}
 
 		/**
-		 * Render a small HTML snippet showing an example Font Awesome icon and a link to the Font Awesome icon list.
-		 *
-		 * @param string   $type Either 'class' to output the icon class string or any other value to output an HTML <i> tag example.
-		 * @param string[] $example_class_array Associative array of example classes keyed by version (e.g., ['v7' => 'fa-regular fa-file-lines']). If a version key is missing a default example is used.
-		 * @return string Sanitized HTML containing the example icon text and a link to the Font Awesome icon list.
-		 */
+	 * Render an example Font Awesome icon and a link to the Font Awesome icon list.
+	 *
+	 * @param string   $type Either 'class' to output the icon class string or any other value to output an HTML <i> tag example.
+	 * @param string[] $example_class_array Associative array of example classes keyed by version (e.g., ['v7' => 'fa-regular fa-file-lines']). A default example is used when a version key is missing.
+	 * @return string Sanitized HTML containing the example icon and a link to the Font Awesome icon list.
+	 */
 	public static function ex_and_link( $type = '', $example_class_array = array() ) {
 		$current_option = self::get_option_fa();
 
@@ -368,9 +369,9 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Provide the Font Awesome 4.x class prefix when the selected version is 4.7.
+	 * Font Awesome 4 class prefix when v4 compatibility is enabled.
 	 *
-	 * @return string `'fa '` if the active Font Awesome version is `4.7`, otherwise an empty string.
+	 * @return string 'fa ' if v4 compatibility is enabled, '' otherwise.
 	 */
 	public static function print_fa() {
 		$compatibilities = self::get_option_compatibilities();
@@ -409,7 +410,9 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Load Font Awesome for Classic editor only.
+	 * Enqueues Font Awesome editor styles for the Classic editor.
+	 *
+	 * Adds the active Font Awesome CSS and, when enabled, v4 and v5 compatibility styles to the Classic (non-block) editor. Does nothing for posts using the block editor.
 	 *
 	 * @param \WP_Post $post Current post object.
 	 * @return void
@@ -469,10 +472,10 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Add version-specific inline CSS used for Font Awesome icon rendering.
+	 * Generate and attach minimal version-specific inline CSS for Font Awesome.
 	 *
-	 * Generates a small, sanitized CSS snippet appropriate for the active Font Awesome mode
-	 * and attaches it as inline styles to the plugin's enqueue handle.
+	 * Creates a small, sanitized CSS snippet appropriate for the active Font Awesome mode
+	 * and adds it as inline styles to the plugin's enqueue handle.
 	 */
 	public static function dynamic_css() {
 		$current     = self::get_option_fa();
@@ -494,11 +497,13 @@ class VkFontAwesomeVersions {
 	}
 
 	/**
-	 * Select the icon class name for the currently active Font Awesome configuration.
+	 * Always selects the Font Awesome 7 class and ignores the Font Awesome 4 alternative.
 	 *
-	 * @param string $class_v4 Class name to use for Font Awesome 4.x (e.g., 4.7).
-	 * @param string $class_v7 Class name to use for Font Awesome 7.x.
-	 * @return string The selected class name, or an empty string when no suitable class was provided.
+	 * The function returns the supplied v7 class string when present; the v4 parameter is not used.
+	 *
+	 * @param string $class_v4 Class name intended for Font Awesome 4.x (ignored).
+	 * @param string $class_v7 Class name intended for Font Awesome 7.x.
+	 * @return string The v7 class if provided, otherwise an empty string.
 	 */
 	public static function class_switch( $class_v4 = '', $class_v7 = '' ) {
 		return $class_v7;
