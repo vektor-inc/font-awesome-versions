@@ -334,13 +334,13 @@ class VkFontAwesomeVersions {
 		return $current_info;
 	}
 
-		/**
-		 * Render an example Font Awesome icon and a link to the Font Awesome icon list.
-		 *
-		 * @param string   $type Either 'class' to output the icon class string or any other value to output an HTML <i> tag example.
-		 * @param string[] $example_class_array Associative array of example classes keyed by version (e.g., ['v7' => 'fa-regular fa-file-lines']). A default example is used when a version key is missing.
-		 * @return string Sanitized HTML containing the example icon and a link to the Font Awesome icon list.
-		 */
+	/**
+	 * Render an example Font Awesome icon and a link to the Font Awesome icon list.
+	 *
+	 * @param string   $type Either 'class' to output the icon class string or any other value to output an HTML <i> tag example.
+	 * @param string[] $example_class_array Associative array of example classes keyed by version (e.g., ['v7' => 'fa-regular fa-file-lines']). A default example is used when a version key is missing.
+	 * @return string Sanitized HTML containing the example icon and a link to the Font Awesome icon list.
+	 */
 	public static function ex_and_link( $type = '', $example_class_array = array() ) {
 		$current_option = self::get_option_fa();
 

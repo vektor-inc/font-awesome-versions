@@ -70,6 +70,11 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 		}
 	}
 
+	/**
+	 * Ensures get_directory_uri() converts filesystem paths into site URLs rooted at wp-content.
+	 *
+	 * @return void
+	 */
 	function test_get_directory_uri() {
 		$tests = array(
 			array(
