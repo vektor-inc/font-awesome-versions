@@ -402,11 +402,11 @@ class VkFontAwesomeVersions {
 	 * @return void
 	 */
 	public static function load_gutenberg_font_awesome() {
-		$current_info = self::current_info();
-		$options = self::get_option_fa();
 		if ( ! is_admin() ) {
 			return;
 		}
+		$current_info = self::current_info();
+		$options = self::get_option_fa();
 		wp_enqueue_style( 'gutenberg-font-awesome', $current_info['url_css'], array(), $current_info['version'] );
 		if ( ! empty( $options['compatibility']['v4'] ) ) {
 			wp_enqueue_style( 'gutenberg-font-awesome-v4-shims', $current_info['url_v4-shims_css'], array( 'gutenberg-font-awesome' ), $current_info['version'] );
