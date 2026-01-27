@@ -90,6 +90,8 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+- [ 仕様変更 ] 編集画面での読み込みの Hook を enqueue_block_assets に変更
+
 0.7.0
 - [ 仕様変更 ] Font Awesome を 7.1.0 に更新
 - [ 仕様変更 ] ４系・６系を削除して７系を使用するように変更
