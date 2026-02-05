@@ -65,7 +65,7 @@ class VkFontAwesomeVersions {
 		/* admin init だと use_block_editor_for_post が効かない */
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'load_admin_font_awesome' ) );
 
-		add_action( 'enqueue_block_editor_assets', array( __CLASS__, 'load_gutenberg_font_awesome' ) );
+		add_action( 'enqueue_block_assets', array( __CLASS__, 'load_gutenberg_font_awesome' ) );
 		add_action( 'wp_head', array( __CLASS__, 'dynamic_css' ), 3 );
 		add_filter( 'body_class', array( __CLASS__, 'add_body_class_fa_version' ) );
 	}
@@ -402,6 +402,9 @@ class VkFontAwesomeVersions {
 	 * @return void
 	 */
 	public static function load_gutenberg_font_awesome() {
+		if ( ! is_admin() ) {
+			return;
+		}
 		$current_info = self::current_info();
 		$options = self::get_option_fa();
 		wp_enqueue_style( 'gutenberg-font-awesome', $current_info['url_css'], array(), $current_info['version'] );
