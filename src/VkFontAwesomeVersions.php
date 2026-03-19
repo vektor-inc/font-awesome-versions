@@ -134,7 +134,10 @@ class VkFontAwesomeVersions {
 		);
 
 		foreach ( $directories as $directory ) {
-			if ( strpos( $path, $directory['dir'] ) === 0 ) {
+			// ディレクトリ境界を正しく判定するため、末尾にスラッシュを付与して比較する。
+			// 例: /wp-content/plugins が /wp-content/plugins-extra に誤マッチしないようにする。
+			$dir_with_slash = rtrim( $directory['dir'], '/' ) . '/';
+			if ( strpos( $path, $dir_with_slash ) === 0 || $path === $directory['dir'] ) {
 				$relative_path = substr( $path, strlen( $directory['dir'] ) );
 				$uri           = $directory['url'] . $relative_path . '/';
 				break;

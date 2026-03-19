@@ -76,6 +76,17 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 				'path'    => WP_CONTENT_DIR . '/libraries/vektor-inc/font-awesome-versions/src',
 				'correct' => content_url() . '/libraries/vektor-inc/font-awesome-versions/src/',
 			),
+			// ディレクトリ名が前方一致で誤マッチしないことを確認する.
+			// 例: /wp-content/plugins-extra は /wp-content/plugins にマッチしてはいけない.
+			array(
+				'path'    => WP_PLUGIN_DIR . '-extra/some-plugin/vendor/vektor-inc/font-awesome-versions/src',
+				'correct' => content_url() . '/plugins-extra/some-plugin/vendor/vektor-inc/font-awesome-versions/src/',
+			),
+			// どのディレクトリにもマッチしないパスは空文字を返す.
+			array(
+				'path'    => '/opt/custom/path/vektor-inc/font-awesome-versions/src',
+				'correct' => '',
+			),
 		);
 		foreach ( $tests as $key => $value ) {
 			$return = VkFontAwesomeVersions::get_directory_uri( $value['path'] );
