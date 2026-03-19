@@ -90,6 +90,9 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+0.7.2
+- [ 仕様変更 ] カスタムディレクトリ構成（Bedrock 等）でアセット URL が正しく生成されるように対応
+
 0.7.1
 - [ 仕様変更 ] 編集画面での読み込みの Hook を enqueue_block_assets に変更
 

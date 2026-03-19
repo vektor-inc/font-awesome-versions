@@ -54,10 +54,38 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 	}
 
 	function test_get_directory_uri() {
+		// WP_PLUGIN_DIR / WPMU_PLUGIN_DIR / テーマルート / WP_CONTENT_DIR それぞれのパスから正しい URL が生成されることを確認する.
 		$tests = array(
+			// WP_PLUGIN_DIR 配下（プラグインの vendor ディレクトリ）.
 			array(
-				'path'    => '/var/www/html/wp-content/themes/lightning-pro/vendor/vektor-inc/font-awesome-versions/src',
-				'correct' => site_url( '/' ) . 'wp-content/themes/lightning-pro/vendor/vektor-inc/font-awesome-versions/src/',
+				'path'    => WP_PLUGIN_DIR . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+				'correct' => plugins_url() . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src/',
+			),
+			// WPMU_PLUGIN_DIR 配下（mu-plugin の vendor ディレクトリ）.
+			array(
+				'path'    => WPMU_PLUGIN_DIR . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+				'correct' => WPMU_PLUGIN_URL . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src/',
+			),
+			// テーマルート配下（テーマの vendor ディレクトリ）.
+			array(
+				'path'    => get_theme_root() . '/lightning-pro/vendor/vektor-inc/font-awesome-versions/src',
+				'correct' => get_theme_root_uri() . '/lightning-pro/vendor/vektor-inc/font-awesome-versions/src/',
+			),
+			// WP_CONTENT_DIR 配下（その他のディレクトリ）.
+			array(
+				'path'    => WP_CONTENT_DIR . '/libraries/vektor-inc/font-awesome-versions/src',
+				'correct' => content_url() . '/libraries/vektor-inc/font-awesome-versions/src/',
+			),
+			// ディレクトリ名が前方一致で誤マッチしないことを確認する.
+			// 例: /wp-content/plugins-extra は /wp-content/plugins にマッチしてはいけない.
+			array(
+				'path'    => WP_PLUGIN_DIR . '-extra/some-plugin/vendor/vektor-inc/font-awesome-versions/src',
+				'correct' => content_url() . '/plugins-extra/some-plugin/vendor/vektor-inc/font-awesome-versions/src/',
+			),
+			// どのディレクトリにもマッチしないパスは空文字を返す.
+			array(
+				'path'    => '/opt/custom/path/vektor-inc/font-awesome-versions/src',
+				'correct' => '',
 			),
 		);
 		foreach ( $tests as $key => $value ) {
