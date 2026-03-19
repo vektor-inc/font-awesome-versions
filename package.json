@@ -1,8 +1,8 @@
 {
 	"scripts": {
 		"wp-env": "wp-env",
-		"update": "ncu -u  --target=minor && rm -rf node_modules package-lock.json && npm install",
-		"upgrade": "ncu -u --target=latest && rm -rf node_modules package-lock.json && npm install",
+		"update": "ncu -u --target=minor && rm -rf node_modules && npm install",
+		"upgrade": "ncu -u --target=latest && rm -rf node_modules && npm install",
 		"build": "gulp copy_fa && npm run translate",
 		"translate": "wp i18n make-pot --skip-js . src/languages/font-awesome-versions.pot",
 		"lint": "npm run format:php && npm run lint:php && npm run lint:js",
