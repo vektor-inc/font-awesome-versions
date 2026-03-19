@@ -1,7 +1,10 @@
 {
 	"scripts": {
 		"wp-env": "wp-env",
-		"build": "ncu -u -x 'gulp' && rm -rf node_modules && npm install && gulp copy_fa",
+		"update": "ncu -u  --target=minor && rm -rf node_modules package-lock.json && npm install",
+		"upgrade": "ncu -u --target=latest && rm -rf node_modules package-lock.json && npm install",
+		"build": "gulp copy_fa && npm run translate",
+		"translate": "wp i18n make-pot --skip-js . src/languages/font-awesome-versions.pot",
 		"lint": "npm run format:php && npm run lint:php && npm run lint:js",
 		"lint:js": "wp-scripts format . && wp-scripts lint-js . --fix",
 		"lint:php": "composer lint",
