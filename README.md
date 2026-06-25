@@ -90,6 +90,7 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+0.7.3
 - [ 仕様変更 ] Font Awesome を 7.1.0 から 7.2.0 に更新
 
 0.7.2
