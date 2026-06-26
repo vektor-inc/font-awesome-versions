@@ -39,13 +39,17 @@ jobs:
               run: printf 'version=%s\n' "$(node -p 'require("@fortawesome/fontawesome-free/package.json").version')" >> "$GITHUB_OUTPUT"
             - name: Check for update
               id: check
+              # ${{ }} を run シェルへ直接展開するとインジェクションの恐れがあるため env 経由で渡す。
+              env:
+                  CURRENT_VERSION: ${{ steps.current.outputs.version }}
+                  NEW_VERSION: ${{ steps.new.outputs.version }}
               run: |
-                  if [ "${{ steps.current.outputs.version }}" = "${{ steps.new.outputs.version }}" ]; then
+                  if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
                       echo "updated=false" >> "$GITHUB_OUTPUT"
-                      echo "Font Awesome は最新です (${{ steps.current.outputs.version }})。PR は作成しません。"
+                      echo "Font Awesome は最新です ($CURRENT_VERSION)。PR は作成しません。"
                   else
                       echo "updated=true" >> "$GITHUB_OUTPUT"
-                      echo "Font Awesome を ${{ steps.current.outputs.version }} → ${{ steps.new.outputs.version }} に更新します。"
+                      echo "Font Awesome を $CURRENT_VERSION → $NEW_VERSION に更新します。"
                   fi
             - name: Rebuild Font Awesome assets
               # gulp copy_fa はアセット再生成に加え、versions() のバージョン定数も同梱版へ自動同期する。
