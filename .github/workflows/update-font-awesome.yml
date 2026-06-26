@@ -28,7 +28,7 @@ jobs:
               run: npm install
             - name: Capture current Font Awesome version
               id: current
-              run: echo "version=$(node -p "require('@fortawesome/fontawesome-free/package.json').version")" >> "$GITHUB_OUTPUT"
+              run: printf 'version=%s\n' "$(node -p 'require("@fortawesome/fontawesome-free/package.json").version')" >> "$GITHUB_OUTPUT"
             - name: Update Font Awesome (minor)
               # 既存の `npm run update` と同じく minor までを対象に追従する。
               run: |
@@ -36,7 +36,7 @@ jobs:
                   npm install
             - name: Capture new Font Awesome version
               id: new
-              run: echo "version=$(node -p "require('@fortawesome/fontawesome-free/package.json').version")" >> "$GITHUB_OUTPUT"
+              run: printf 'version=%s\n' "$(node -p 'require("@fortawesome/fontawesome-free/package.json").version')" >> "$GITHUB_OUTPUT"
             - name: Check for update
               id: check
               run: |

@@ -26,19 +26,30 @@ const escapeRegExp = ( str ) => str.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
 // --- 1. PHP のバージョン定数を更新 ---
 const phpPath = 'src/VkFontAwesomeVersions.php';
 let php = fs.readFileSync( phpPath, 'utf8' );
-// versions() 内の `'version' => '<旧バージョン>'` のみを対象に置換する。
-// option default の `'version' => '7_WebFonts_CSS'` 等は旧バージョン文字列に一致しないため影響しない。
+// versions() メソッド内の `'version' => '<旧バージョン>'` のみを対象に置換する。
+// 置換対象を versions() のブロックに限定し、将来 versions() 外に同じバージョン文字列の
+// 設定が増えても巻き込まないようにする。
+const versionsStart = php.indexOf( 'function versions(' );
+if ( versionsStart === -1 ) {
+	throw new Error( `${ phpPath } 内に versions() メソッドが見つかりませんでした。` );
+}
+const versionsEnd = php.indexOf( 'return $versions;', versionsStart );
+if ( versionsEnd === -1 ) {
+	throw new Error( `${ phpPath } の versions() メソッド内に return $versions; が見つかりませんでした。` );
+}
 const phpPattern = new RegExp(
 	`('version'\\s*=>\\s*')${ escapeRegExp( oldVersion ) }(')`,
 	'g'
 );
-const phpMatches = php.match( phpPattern );
+const versionsBlock = php.slice( versionsStart, versionsEnd );
+const phpMatches = versionsBlock.match( phpPattern );
 if ( ! phpMatches ) {
 	throw new Error(
-		`${ phpPath } 内に Font Awesome バージョン定数 '${ oldVersion }' が見つかりませんでした。`
+		`${ phpPath } の versions() 内に Font Awesome バージョン定数 '${ oldVersion }' が見つかりませんでした。`
 	);
 }
-php = php.replace( phpPattern, `$1${ newVersion }$2` );
+const updatedBlock = versionsBlock.replace( phpPattern, `$1${ newVersion }$2` );
+php = php.slice( 0, versionsStart ) + updatedBlock + php.slice( versionsEnd );
 fs.writeFileSync( phpPath, php );
 console.log(
 	`${ phpPath }: バージョン定数を ${ oldVersion } → ${ newVersion } に更新 (${ phpMatches.length } 箇所)`
@@ -52,16 +63,18 @@ const entry = `- [ 仕様変更 ] Font Awesome を ${ oldVersion } から ${ new
 if ( readme.includes( entry ) ) {
 	console.log( `${ readmePath }: 同一の changelog エントリが既に存在するためスキップ` );
 } else {
-	// changelog は本文末尾の "---" 区切りの下にある。区切り直後へ未リリースエントリとして挿入する。
-	const marker = '\n---\n';
-	const markerIndex = readme.lastIndexOf( marker );
-	if ( markerIndex === -1 ) {
-		throw new Error( `${ readmePath } に changelog の区切り "---" が見つかりませんでした。` );
+	// changelog は「x.y.z」形式のバージョン見出しが並ぶセクション。末尾の "---" 区切りに依存すると
+	// 将来 changelog の後ろに別の "---" が増えたとき誤った位置に挿入されるため、最初のバージョン
+	// 見出し行を直接アンカーにして、その直前へ未リリースエントリとして挿入する。
+	const versionHeading = /^\d+\.\d+(?:\.\d+)?[ \t]*$/m;
+	const headingMatch = versionHeading.exec( readme );
+	if ( ! headingMatch ) {
+		throw new Error( `${ readmePath } に changelog のバージョン見出し（例: 0.7.3）が見つかりませんでした。` );
 	}
-	const insertPos = markerIndex + marker.length;
+	const insertPos = headingMatch.index;
 	readme =
 		readme.slice( 0, insertPos ) +
-		`\n${ entry }\n` +
+		`${ entry }\n\n` +
 		readme.slice( insertPos );
 	fs.writeFileSync( readmePath, readme );
 	console.log( `${ readmePath }: changelog エントリを追記` );
