@@ -1,0 +1,98 @@
+name: Update Font Awesome
+
+# Font Awesome (@fortawesome/fontawesome-free) のマイナーアップデートを検知し、
+# アセットを再ビルドしてプルリクエストを自動作成するワークフロー。
+# 毎週月曜 00:00 UTC に実行。手動実行 (workflow_dispatch) も可能。
+on:
+    schedule:
+        - cron: '0 0 * * 1'
+    workflow_dispatch:
+
+# 固定ブランチ update/font-awesome への push/PR 更新が競合しないよう、
+# schedule・workflow_dispatch・再実行をまたいで同時実行を1つに直列化する。
+# 進行中の更新を途中で止めないよう cancel-in-progress は false。
+concurrency:
+    group: update-font-awesome
+    cancel-in-progress: false
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    update:
+        name: Update Font Awesome and create PR
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+              with:
+                  persist-credentials: false
+            - name: Setup Node
+              uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+              with:
+                  node-version: 24.x
+            - name: Install dependencies
+              run: npm install
+            - name: Capture current Font Awesome version
+              id: current
+              run: printf 'version=%s\n' "$(node -p 'require("@fortawesome/fontawesome-free/package.json").version')" >> "$GITHUB_OUTPUT"
+            - name: Update Font Awesome (minor)
+              # 既存の `npm run update` と同じく minor までを対象に追従する。
+              run: |
+                  npx --no-install ncu -u --target minor --filter @fortawesome/fontawesome-free
+                  npm install
+            - name: Capture new Font Awesome version
+              id: new
+              run: printf 'version=%s\n' "$(node -p 'require("@fortawesome/fontawesome-free/package.json").version')" >> "$GITHUB_OUTPUT"
+            - name: Check for update
+              id: check
+              # ${{ }} を run シェルへ直接展開するとインジェクションの恐れがあるため env 経由で渡す。
+              env:
+                  CURRENT_VERSION: ${{ steps.current.outputs.version }}
+                  NEW_VERSION: ${{ steps.new.outputs.version }}
+              run: |
+                  if [ "$CURRENT_VERSION" = "$NEW_VERSION" ]; then
+                      echo "updated=false" >> "$GITHUB_OUTPUT"
+                      echo "Font Awesome は最新です ($CURRENT_VERSION)。PR は作成しません。"
+                  else
+                      echo "updated=true" >> "$GITHUB_OUTPUT"
+                      echo "Font Awesome を $CURRENT_VERSION → $NEW_VERSION に更新します。"
+                  fi
+            - name: Rebuild Font Awesome assets
+              # gulp copy_fa はアセット再生成に加え、versions() のバージョン定数も同梱版へ自動同期する。
+              if: steps.check.outputs.updated == 'true'
+              run: npx gulp copy_fa
+            - name: Update changelog
+              if: steps.check.outputs.updated == 'true'
+              env:
+                  OLD_VERSION: ${{ steps.current.outputs.version }}
+                  NEW_VERSION: ${{ steps.new.outputs.version }}
+              run: node .github/scripts/apply-fa-update.mjs
+            - name: Create Pull Request
+              if: steps.check.outputs.updated == 'true'
+              uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+              with:
+                  branch: update/font-awesome
+                  delete-branch: true
+                  commit-message: '[ 仕様変更 ] Font Awesome を ${{ steps.current.outputs.version }} から ${{ steps.new.outputs.version }} に更新'
+                  title: '[ 仕様変更 ] Font Awesome を ${{ steps.current.outputs.version }} から ${{ steps.new.outputs.version }} に更新'
+                  labels: dependencies
+                  body: |
+                      `@fortawesome/fontawesome-free` を **${{ steps.current.outputs.version }}** から **${{ steps.new.outputs.version }}** に更新し、`gulp copy_fa` でアセットを再ビルドしました。
+
+                      ## 自動変更内容
+
+                      - `package.json` / `package-lock.json` の `@fortawesome/fontawesome-free` をマイナー更新
+                      - `src/font-awesome/` 配下の CSS / JS / webfonts を再生成
+                      - `src/VkFontAwesomeVersions.php` の `versions()` 内バージョン定数を更新
+                      - `README.md` の changelog に `[ 仕様変更 ] Font Awesome を ... に更新` を追記（プラグイン自体のバージョン番号は未付与）
+
+                      ## マージ前に確認してください
+
+                      - [ ] webfonts (woff2) が破損していないこと（先頭バイトに `EF BF BD` が無いこと）
+                      - [ ] changelog エントリの内容・分類が適切なこと
+                      - [ ] リリース時にプラグインのバージョン番号を付与すること
+
+                      > **補足:** この PR は `GITHUB_TOKEN` で作成されるため、`Build Check & PHPUnit` ワークフローは自動起動しません。CI を回すには PR を一度 close → reopen するか、専用の PAT を `secrets` に設定して `peter-evans/create-pull-request` の `token` に渡してください。
+
+                      🤖 Generated with [Claude Code](https://claude.com/claude-code)
