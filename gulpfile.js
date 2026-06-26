@@ -43,10 +43,15 @@ function syncFontAwesomeVersion() {
 
 	const body = php.slice( bodyOpen, bodyClose );
 	// 'version' => '<semver>' の semver 値のみを同梱バージョンへ差し替える。
-	const updatedBody = body.replace(
-		/('version'\s*=>\s*')\d+\.\d+\.\d+(')/g,
-		`$1${ faVersion }$2`
-	);
+	const versionPattern = /('version'\s*=>\s*')\d+\.\d+\.\d+(')/g;
+	if ( body.match( versionPattern ) === null ) {
+		// 定数が1つも見つからない場合は versions() の構造変化など想定外の状態。
+		// 黙って素通りすると版ズレを検知できないため、ビルドを失敗させる。
+		throw new Error(
+			`${ phpPath } の versions() 内に Font Awesome バージョン定数 ('version' => 'x.y.z') が見つかりませんでした。`
+		);
+	}
+	const updatedBody = body.replace( versionPattern, `$1${ faVersion }$2` );
 	if ( updatedBody !== body ) {
 		fs.writeFileSync(
 			phpPath,
@@ -54,6 +59,11 @@ function syncFontAwesomeVersion() {
 		);
 		console.log(
 			`versions(): Font Awesome バージョン定数を ${ faVersion } に同期しました。`
+		);
+	} else {
+		// 定数は見つかったが既に同梱版と一致しているケース（通常の再ビルド）。失敗ではない。
+		console.log(
+			`versions(): Font Awesome バージョン定数は既に ${ faVersion } に同期済みです。`
 		);
 	}
 }
