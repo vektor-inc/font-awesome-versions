@@ -8,6 +8,13 @@ on:
         - cron: '0 0 * * 1'
     workflow_dispatch:
 
+# 固定ブランチ update/font-awesome への push/PR 更新が競合しないよう、
+# schedule・workflow_dispatch・再実行をまたいで同時実行を1つに直列化する。
+# 進行中の更新を途中で止めないよう cancel-in-progress は false。
+concurrency:
+    group: update-font-awesome
+    cancel-in-progress: false
+
 permissions:
     contents: write
     pull-requests: write
