@@ -15,7 +15,7 @@
 		"phpunit": "composer install && wp-env run tests-cli --env-cwd='wp-content/plugins/vk-font-awesome-versions' vendor/bin/phpunit -c .phpunit.xml --verbose"
 	},
 	"devDependencies": {
-		"@fortawesome/fontawesome-free": "^7.2.0",
+		"@fortawesome/fontawesome-free": "^7.3.0",
 		"@wordpress/env": "^11.8.1",
 		"gulp": "^5.0.1",
 		"gulp-replace": "^1.1.4",
