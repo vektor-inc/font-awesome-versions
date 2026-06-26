@@ -29,14 +29,20 @@ let php = fs.readFileSync( phpPath, 'utf8' );
 // versions() メソッド内の `'version' => '<旧バージョン>'` のみを対象に置換する。
 // 置換対象を versions() のブロックに限定し、将来 versions() 外に同じバージョン文字列の
 // 設定が増えても巻き込まないようにする。
-const versionsStart = php.indexOf( 'function versions(' );
-if ( versionsStart === -1 ) {
+// indexOf による固定文字列一致は空白の入り方に弱いため、空白を許容する正規表現で
+// versions() の開始位置と return 文の位置を検出する。
+const versionsStartMatch = /function\s+versions\s*\(/.exec( php );
+if ( ! versionsStartMatch ) {
 	throw new Error( `${ phpPath } 内に versions() メソッドが見つかりませんでした。` );
 }
-const versionsEnd = php.indexOf( 'return $versions;', versionsStart );
-if ( versionsEnd === -1 ) {
+const versionsStart = versionsStartMatch.index;
+const versionsEndRegex = /return\s+\$versions\s*;/g;
+versionsEndRegex.lastIndex = versionsStart;
+const versionsEndMatch = versionsEndRegex.exec( php );
+if ( ! versionsEndMatch ) {
 	throw new Error( `${ phpPath } の versions() メソッド内に return $versions; が見つかりませんでした。` );
 }
+const versionsEnd = versionsEndMatch.index;
 const phpPattern = new RegExp(
 	`('version'\\s*=>\\s*')${ escapeRegExp( oldVersion ) }(')`,
 	'g'
