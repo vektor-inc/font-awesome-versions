@@ -1,10 +1,10 @@
-// Font Awesome 自動更新ワークフロー用のファイル書き換えスクリプト。
+// Font Awesome 自動更新ワークフロー用の changelog 追記スクリプト。
 //
-// gulp copy_fa でアセットを再生成した後に実行し、以下を更新する:
-//   1. src/VkFontAwesomeVersions.php の versions() 内にハードコードされた
-//      Font Awesome バージョン定数 ('version' => 'X.Y.Z') を新バージョンへ更新
-//   2. README.md の changelog に未リリースエントリを追記
-//      （プラグイン自体のバージョン番号付与はリリース時に人間が行うため、ここでは付けない）
+// README.md の changelog に未リリースエントリを追記する。
+// （プラグイン自体のバージョン番号付与はリリース時に人間が行うため、ここでは付けない）
+//
+// versions() 内の Font Awesome バージョン定数は gulp copy_fa が自動同期するため、
+// このスクリプトでは扱わない（issue #46 対応）。
 //
 // 環境変数 OLD_VERSION / NEW_VERSION に更新前後の Font Awesome バージョンを渡すこと。
 
@@ -20,70 +20,6 @@ if ( oldVersion === newVersion ) {
 	throw new Error( 'OLD_VERSION と NEW_VERSION が同一です。更新がありません。' );
 }
 
-// 正規表現で使うためにバージョン文字列をエスケープする。
-const escapeRegExp = ( str ) => str.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
-
-// --- 1. PHP のバージョン定数を更新 ---
-const phpPath = 'src/VkFontAwesomeVersions.php';
-let php = fs.readFileSync( phpPath, 'utf8' );
-// versions() メソッド内の `'version' => '<旧バージョン>'` のみを対象に置換する。
-// 置換対象を versions() のブロックに限定し、将来 versions() 外に同じバージョン文字列の
-// 設定が増えても巻き込まないようにする。
-// indexOf による固定文字列一致は空白の入り方に弱いため、空白を許容する正規表現で
-// versions() の開始位置を検出する。
-const versionsStartMatch = /function\s+versions\s*\(/.exec( php );
-if ( ! versionsStartMatch ) {
-	throw new Error( `${ phpPath } 内に versions() メソッドが見つかりませんでした。` );
-}
-const versionsStart = versionsStartMatch.index;
-// 関数本体の開き波括弧から、対応する閉じ波括弧までを波括弧の対応を数えて特定し、
-// return $versions; の検索を versions() の本体内に限定する（別メソッドの return を誤検出しないため）。
-const bodyOpen = php.indexOf( '{', versionsStart );
-if ( bodyOpen === -1 ) {
-	throw new Error( `${ phpPath } の versions() メソッド本体が見つかりませんでした。` );
-}
-let depth = 0;
-let bodyClose = -1;
-for ( let i = bodyOpen; i < php.length; i++ ) {
-	if ( php[ i ] === '{' ) {
-		depth++;
-	} else if ( php[ i ] === '}' ) {
-		depth--;
-		if ( depth === 0 ) {
-			bodyClose = i;
-			break;
-		}
-	}
-}
-if ( bodyClose === -1 ) {
-	throw new Error( `${ phpPath } の versions() メソッドの波括弧が対応していません。` );
-}
-const versionsEndRegex = /return\s+\$versions\s*;/g;
-versionsEndRegex.lastIndex = bodyOpen;
-const versionsEndMatch = versionsEndRegex.exec( php );
-if ( ! versionsEndMatch || versionsEndMatch.index > bodyClose ) {
-	throw new Error( `${ phpPath } の versions() メソッド内に return $versions; が見つかりませんでした。` );
-}
-const versionsEnd = versionsEndMatch.index;
-const phpPattern = new RegExp(
-	`('version'\\s*=>\\s*')${ escapeRegExp( oldVersion ) }(')`,
-	'g'
-);
-const versionsBlock = php.slice( versionsStart, versionsEnd );
-const phpMatches = versionsBlock.match( phpPattern );
-if ( ! phpMatches ) {
-	throw new Error(
-		`${ phpPath } の versions() 内に Font Awesome バージョン定数 '${ oldVersion }' が見つかりませんでした。`
-	);
-}
-const updatedBlock = versionsBlock.replace( phpPattern, `$1${ newVersion }$2` );
-php = php.slice( 0, versionsStart ) + updatedBlock + php.slice( versionsEnd );
-fs.writeFileSync( phpPath, php );
-console.log(
-	`${ phpPath }: バージョン定数を ${ oldVersion } → ${ newVersion } に更新 (${ phpMatches.length } 箇所)`
-);
-
-// --- 2. README.md の changelog に未リリースエントリを追記 ---
 const readmePath = 'README.md';
 let readme = fs.readFileSync( readmePath, 'utf8' );
 const entry = `- [ 仕様変更 ] Font Awesome を ${ oldVersion } から ${ newVersion } に更新`;

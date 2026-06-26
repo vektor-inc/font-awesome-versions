@@ -48,9 +48,10 @@ jobs:
                       echo "Font Awesome を ${{ steps.current.outputs.version }} → ${{ steps.new.outputs.version }} に更新します。"
                   fi
             - name: Rebuild Font Awesome assets
+              # gulp copy_fa はアセット再生成に加え、versions() のバージョン定数も同梱版へ自動同期する。
               if: steps.check.outputs.updated == 'true'
               run: npx gulp copy_fa
-            - name: Apply version constants and changelog
+            - name: Update changelog
               if: steps.check.outputs.updated == 'true'
               env:
                   OLD_VERSION: ${{ steps.current.outputs.version }}
