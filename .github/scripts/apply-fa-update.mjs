@@ -30,16 +30,38 @@ let php = fs.readFileSync( phpPath, 'utf8' );
 // 置換対象を versions() のブロックに限定し、将来 versions() 外に同じバージョン文字列の
 // 設定が増えても巻き込まないようにする。
 // indexOf による固定文字列一致は空白の入り方に弱いため、空白を許容する正規表現で
-// versions() の開始位置と return 文の位置を検出する。
+// versions() の開始位置を検出する。
 const versionsStartMatch = /function\s+versions\s*\(/.exec( php );
 if ( ! versionsStartMatch ) {
 	throw new Error( `${ phpPath } 内に versions() メソッドが見つかりませんでした。` );
 }
 const versionsStart = versionsStartMatch.index;
+// 関数本体の開き波括弧から、対応する閉じ波括弧までを波括弧の対応を数えて特定し、
+// return $versions; の検索を versions() の本体内に限定する（別メソッドの return を誤検出しないため）。
+const bodyOpen = php.indexOf( '{', versionsStart );
+if ( bodyOpen === -1 ) {
+	throw new Error( `${ phpPath } の versions() メソッド本体が見つかりませんでした。` );
+}
+let depth = 0;
+let bodyClose = -1;
+for ( let i = bodyOpen; i < php.length; i++ ) {
+	if ( php[ i ] === '{' ) {
+		depth++;
+	} else if ( php[ i ] === '}' ) {
+		depth--;
+		if ( depth === 0 ) {
+			bodyClose = i;
+			break;
+		}
+	}
+}
+if ( bodyClose === -1 ) {
+	throw new Error( `${ phpPath } の versions() メソッドの波括弧が対応していません。` );
+}
 const versionsEndRegex = /return\s+\$versions\s*;/g;
-versionsEndRegex.lastIndex = versionsStart;
+versionsEndRegex.lastIndex = bodyOpen;
 const versionsEndMatch = versionsEndRegex.exec( php );
-if ( ! versionsEndMatch ) {
+if ( ! versionsEndMatch || versionsEndMatch.index > bodyClose ) {
 	throw new Error( `${ phpPath } の versions() メソッド内に return $versions; が見つかりませんでした。` );
 }
 const versionsEnd = versionsEndMatch.index;
