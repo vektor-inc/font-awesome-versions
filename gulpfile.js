@@ -70,14 +70,21 @@ function syncFontAwesomeVersion() {
 
 /**
  * Copy Font Awesome
+ *
+ * gulp 5 (vinyl-fs) は src の encoding デフォルトが 'utf8' のため、binary を読み込む際に
+ * encoding: false を指定しないと woff2 等のフォントバイナリが UTF-8 デコード→再エンコードで
+ * 破損する（不正バイトが U+FFFD = EF BF BD に置換される）。再発防止のため全 src に明示指定する。
  */
 gulp.task( 'copy_fa', function ( done ) {
-	gulp.src( [
-		'./node_modules/@fortawesome/fontawesome-free/css/all.min.css',
-		'./node_modules/@fortawesome/fontawesome-free/css/v4-shims.min.css',
-		'./node_modules/@fortawesome/fontawesome-free/css/v4-font-face.min.css',
-		'./node_modules/@fortawesome/fontawesome-free/css/v5-font-face.min.css',
-	] )
+	gulp.src(
+		[
+			'./node_modules/@fortawesome/fontawesome-free/css/all.min.css',
+			'./node_modules/@fortawesome/fontawesome-free/css/v4-shims.min.css',
+			'./node_modules/@fortawesome/fontawesome-free/css/v4-font-face.min.css',
+			'./node_modules/@fortawesome/fontawesome-free/css/v5-font-face.min.css',
+		],
+		{ encoding: false }
+	)
 		.pipe(
 			replace(
 				'*/',
@@ -85,13 +92,16 @@ gulp.task( 'copy_fa', function ( done ) {
 			)
 		)
 		.pipe( gulp.dest( './src/font-awesome/css/' ) );
-	gulp.src( [
-		'./node_modules/@fortawesome/fontawesome-free/js/all.min.js',
-		'./node_modules/@fortawesome/fontawesome-free/js/v4-shims.min.js',
-	] ).pipe( gulp.dest( [ './src/font-awesome/js/' ] ) );
-	gulp.src( './node_modules/@fortawesome/fontawesome-free/webfonts/**' ).pipe(
-		gulp.dest( './src/font-awesome/webfonts/' )
-	);
+	gulp.src(
+		[
+			'./node_modules/@fortawesome/fontawesome-free/js/all.min.js',
+			'./node_modules/@fortawesome/fontawesome-free/js/v4-shims.min.js',
+		],
+		{ encoding: false }
+	).pipe( gulp.dest( [ './src/font-awesome/js/' ] ) );
+	gulp.src( './node_modules/@fortawesome/fontawesome-free/webfonts/**', {
+		encoding: false,
+	} ).pipe( gulp.dest( './src/font-awesome/webfonts/' ) );
 	syncFontAwesomeVersion();
 	done();
 } );

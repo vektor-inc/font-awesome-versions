@@ -90,6 +90,9 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+0.7.4
+- [ 不具合修正 ] ビルド時に webfonts (woff2) が破損し Font Awesome アイコンが表示されない不具合を修正
+
 0.7.3
 - [ 仕様変更 ] Font Awesome を 7.1.0 から 7.2.0 に更新
 
