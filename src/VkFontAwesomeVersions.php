@@ -210,7 +210,7 @@ class VkFontAwesomeVersions {
 		$versions = array(
 			'7_WebFonts_CSS' => array(
 				'label'                => '7 Web Fonts with CSS',
-				'version'              => '7.2.0',
+				'version'              => '7.3.0',
 				'type'                 => 'web-fonts-with-css',
 				'url_css'              => $font_awesome_directory_uri . 'css/all.min.css',
 				'url_js'               => '',
@@ -222,7 +222,7 @@ class VkFontAwesomeVersions {
 			),
 			'7_SVG_JS'       => array(
 				'label'                => '7 SVG with JS ( ' . __( 'Not recommended', 'font-awesome-versions' ) . ' )',
-				'version'              => '7.2.0',
+				'version'              => '7.3.0',
 				'type'                 => 'svg-with-js',
 				/* [ Notice ] use editor css*/
 				'url_css'              => $font_awesome_directory_uri . 'css/all.min.css',
