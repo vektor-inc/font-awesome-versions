@@ -267,17 +267,20 @@ class VkFontAwesomeVersions {
 		$version = get_option( 'vk_font_awesome_version' );
 		$options = get_option( 'vk_font_awesome_options', self::get_option_default() );
 
+		// 保存値が配列でない壊れた状態でも、後続の添字アクセスや書き込みで警告や Fatal を起こさないよう、
+		// マイグレーション処理より前に配列であることを保証する。
+		if ( ! is_array( $options ) ) {
+			$options = self::get_option_default();
+		}
+
 		// 古い保存値が残っている場合のマイグレーション対応
 		if ( ! empty( $version ) && empty( $options['version'] ) ) {
 			$options['version'] = $version;
 			delete_option( 'vk_font_awesome_version' );
 		}
 
-		// 保存値が配列でない・version キーが無い／文字列でない・compatibility が不正など、
-		// 壊れた保存値が入っていても後続の比較や添字アクセスで警告や Fatal を起こさないよう正規化する。
-		if ( ! is_array( $options ) ) {
-			$options = self::get_option_default();
-		}
+		// version キーが無い／文字列でない・compatibility が不正など、壊れた保存値でも
+		// 後続の比較や添字アクセスで警告や Fatal を起こさないよう正規化する。
 		if ( empty( $options['version'] ) || ! is_string( $options['version'] ) ) {
 			$default            = self::get_option_default();
 			$options['version'] = $default['version'];
