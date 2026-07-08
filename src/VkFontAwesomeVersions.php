@@ -459,7 +459,7 @@ class VkFontAwesomeVersions {
 			return;
 		}
 		$current_info = self::current_info();
-		$options      = self::get_option_fa();
+		$options = self::get_option_fa();
 		wp_enqueue_style( 'gutenberg-font-awesome', $current_info['url_css'], array(), $current_info['version'] );
 		if ( ! empty( $options['compatibility']['v4'] ) ) {
 			wp_enqueue_style( 'gutenberg-font-awesome-v4-shims', $current_info['url_v4-shims_css'], array( 'gutenberg-font-awesome' ), $current_info['version'] );
@@ -590,12 +590,12 @@ class VkFontAwesomeVersions {
 		$wp_customize->add_control(
 			'vk_font_awesome_options[version]',
 			array(
-				'label'    => __( 'Font Awesome Version', 'font-awesome-versions' ),
-				'section'  => 'VK Font Awesome',
-				'settings' => 'vk_font_awesome_options[version]',
-				'type'     => 'select',
-				'priority' => '',
-				'choices'  => $choices,
+				'label'       => __( 'Font Awesome Version', 'font-awesome-versions' ),
+				'section'     => 'VK Font Awesome',
+				'settings'    => 'vk_font_awesome_options[version]',
+				'type'        => 'select',
+				'priority'    => '',
+				'choices'     => $choices,
 			)
 		);
 
