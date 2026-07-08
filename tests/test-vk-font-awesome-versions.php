@@ -166,6 +166,17 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 					),
 				),
 			),
+			// versions() に存在しない不正な文字列はデフォルト（7_WebFonts_CSS）へフォールバックする。
+			array(
+				'option_fa_version' => 'invalid_value',
+				'correct'           => array(
+					'version'       => '7_WebFonts_CSS',
+					'compatibility' => array(
+						'v4' => false,
+						'v5' => false,
+					),
+				),
+			),
 		);
 
 		foreach ( $tests as $key => $value ) {
@@ -276,6 +287,11 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 					'version'       => array( 'broken' ),
 					'compatibility' => array(),
 				),
+				'expected_key'        => '7_WebFonts_CSS',
+			),
+			array(
+				'test_condition_name' => '保存オプション自体が配列でなく文字列の場合 => Fatal を起こさず 7_WebFonts_CSS へフォールバック',
+				'stored'              => 'not-an-array',
 				'expected_key'        => '7_WebFonts_CSS',
 			),
 		);

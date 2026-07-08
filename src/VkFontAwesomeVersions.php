@@ -263,14 +263,17 @@ class VkFontAwesomeVersions {
 	 */
 	public static function get_option_fa() {
 
+		// 既定値は複数の分岐で使うため、一度だけ算出して使い回す（get_option_default() は apply_filters 経由のため）。
+		$default = self::get_option_default();
+
 		// 基本の保存値（実際に読み込むアセットのバージョン）
 		$version = get_option( 'vk_font_awesome_version' );
-		$options = get_option( 'vk_font_awesome_options', self::get_option_default() );
+		$options = get_option( 'vk_font_awesome_options', $default );
 
 		// 保存値が配列でない壊れた状態でも、後続の添字アクセスや書き込みで警告や Fatal を起こさないよう、
 		// マイグレーション処理より前に配列であることを保証する。
 		if ( ! is_array( $options ) ) {
-			$options = self::get_option_default();
+			$options = $default;
 		}
 
 		// 古い保存値が残っている場合のマイグレーション対応
@@ -282,7 +285,6 @@ class VkFontAwesomeVersions {
 		// version キーが無い／文字列でない・compatibility が不正など、壊れた保存値でも
 		// 後続の比較や添字アクセスで警告や Fatal を起こさないよう正規化する。
 		if ( empty( $options['version'] ) || ! is_string( $options['version'] ) ) {
-			$default            = self::get_option_default();
 			$options['version'] = $default['version'];
 		}
 		if ( ! isset( $options['compatibility'] ) || ! is_array( $options['compatibility'] ) ) {
@@ -309,6 +311,14 @@ class VkFontAwesomeVersions {
 			$options['version'] = '7_WebFonts_CSS';
 		} elseif ( '6_SVG_JS' === $options['version'] ) {
 			$options['version'] = '7_SVG_JS';
+		}
+
+		// ここまでの移行処理でも versions() に存在しないキー（不正な文字列など）が残っている場合はデフォルトへフォールバックする。
+		// get_option_fa() が常に有効なバージョンキーを返すようにし、=== 比較のみを行う呼び出し元
+		// （ex_and_link() / print_fa() / dynamic_css() / class_switch() / old_notice() 等）での未定義参照を防ぐ。
+		$valid_versions = self::versions();
+		if ( empty( $valid_versions[ $options['version'] ] ) ) {
+			$options['version'] = $default['version'];
 		}
 
 		// 保存値が存在しない場合はデフォルトをセット
@@ -449,7 +459,7 @@ class VkFontAwesomeVersions {
 			return;
 		}
 		$current_info = self::current_info();
-		$options = self::get_option_fa();
+		$options      = self::get_option_fa();
 		wp_enqueue_style( 'gutenberg-font-awesome', $current_info['url_css'], array(), $current_info['version'] );
 		if ( ! empty( $options['compatibility']['v4'] ) ) {
 			wp_enqueue_style( 'gutenberg-font-awesome-v4-shims', $current_info['url_v4-shims_css'], array( 'gutenberg-font-awesome' ), $current_info['version'] );
@@ -580,12 +590,12 @@ class VkFontAwesomeVersions {
 		$wp_customize->add_control(
 			'vk_font_awesome_options[version]',
 			array(
-				'label'       => __( 'Font Awesome Version', 'font-awesome-versions' ),
-				'section'     => 'VK Font Awesome',
-				'settings'    => 'vk_font_awesome_options[version]',
-				'type'        => 'select',
-				'priority'    => '',
-				'choices'     => $choices,
+				'label'    => __( 'Font Awesome Version', 'font-awesome-versions' ),
+				'section'  => 'VK Font Awesome',
+				'settings' => 'vk_font_awesome_options[version]',
+				'type'     => 'select',
+				'priority' => '',
+				'choices'  => $choices,
 			)
 		);
 
