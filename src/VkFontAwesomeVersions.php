@@ -276,9 +276,13 @@ class VkFontAwesomeVersions {
 			$options = $default;
 		}
 
-		// 古い保存値が残っている場合のマイグレーション対応
-		if ( ! empty( $version ) && empty( $options['version'] ) ) {
-			$options['version'] = $version;
+		// 古い保存値（旧 vk_font_awesome_version オプション）が残っている場合のマイグレーション対応。
+		// 値は vk_font_awesome_options へ一本化するため、現在の version が空のときのみ引き継ぎ、
+		// 引き継ぎの有無にかかわらず旧オプションは常に削除して DB にスタール値を残さない。
+		if ( ! empty( $version ) ) {
+			if ( empty( $options['version'] ) ) {
+				$options['version'] = $version;
+			}
 			delete_option( 'vk_font_awesome_version' );
 		}
 

@@ -194,6 +194,44 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test get_option_fa() : 旧 vk_font_awesome_version オプションの掃除
+	 *
+	 * 旧オプションが残っている場合、値を引き継いだか否かにかかわらず get_option_fa() 実行後に
+	 * 旧オプションが削除され、DB にスタール値が残らないことを確認する。
+	 *
+	 * @return void
+	 */
+	function test_get_option_fa_deletes_legacy_version_option() {
+		$tests = array(
+			array(
+				'test_condition_name' => '新形式に version が無く旧オプションだけある場合 => 旧オプションの値を引き継いで削除',
+				'new_option'          => array( 'compatibility' => array() ),
+				'legacy_version'      => '7_SVG_JS',
+				'expected_version'    => '7_SVG_JS',
+			),
+			array(
+				'test_condition_name' => '新形式が壊れたスカラー値かつ旧オプションもある場合 => デフォルトに寄せつつ旧オプションを削除',
+				'new_option'          => 'broken-scalar',
+				'legacy_version'      => '6_WebFonts_CSS',
+				'expected_version'    => '7_WebFonts_CSS',
+			),
+		);
+
+		foreach ( $tests as $case ) {
+			// 新旧両方のオプションをセットする。
+			update_option( 'vk_font_awesome_options', $case['new_option'] );
+			update_option( 'vk_font_awesome_version', $case['legacy_version'] );
+
+			$return = VkFontAwesomeVersions::get_option_fa();
+
+			// version が期待どおり解決されていること。
+			$this->assertEquals( $case['expected_version'], $return['version'], $case['test_condition_name'] );
+			// 旧オプションが削除されていること（get_option は未設定時 false を返す）。
+			$this->assertFalse( get_option( 'vk_font_awesome_version' ), $case['test_condition_name'] . '（旧オプション削除）' );
+		}
+	}
+
+	/**
 	 * Test current_info() method
 	 *
 	 * current_info() は get_option_fa() の正規化結果を基準にアセット情報を返す。
