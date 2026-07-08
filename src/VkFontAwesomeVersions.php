@@ -273,6 +273,19 @@ class VkFontAwesomeVersions {
 			delete_option( 'vk_font_awesome_version' );
 		}
 
+		// 保存値が配列でない・version キーが無い／文字列でない・compatibility が不正など、
+		// 壊れた保存値が入っていても後続の比較や添字アクセスで警告や Fatal を起こさないよう正規化する。
+		if ( ! is_array( $options ) ) {
+			$options = self::get_option_default();
+		}
+		if ( empty( $options['version'] ) || ! is_string( $options['version'] ) ) {
+			$default            = self::get_option_default();
+			$options['version'] = $default['version'];
+		}
+		if ( ! isset( $options['compatibility'] ) || ! is_array( $options['compatibility'] ) ) {
+			$options['compatibility'] = array();
+		}
+
 		// 4系は7系へ移行しつつ4系互換モードを有効化
 		if ( '4.7' === $options['version'] ) {
 			$options['version']             = '7_WebFonts_CSS';
@@ -309,17 +322,20 @@ class VkFontAwesomeVersions {
 	public static function current_info() {
 		// アセット読み込み用の実バージョンを算出
 		$versions = self::versions();
-		$option   = get_option( 'vk_font_awesome_options', self::get_option_default() );
+
+		// 実際に使用するバージョンは get_option_fa() の正規化結果を唯一の基準にする。
+		// これによりレガシー値（4/5/6 系）も 7 系（SVG / CSS の別を保持）へ正しく解決され、
+		// 呼び出し箇所（フロント / 管理画面 / エディタ）による差異が出ない。
+		$option = self::get_option_fa();
 
 		// 保存値は array( 'version' => ... ) 想定だが、古い保存値や誤った値が入っている場合に備えて
 		// バージョンキー（文字列）を安全に取り出す。配列のまま添字アクセスすると PHP 8 で Fatal になるため。
 		$version = is_array( $option ) && isset( $option['version'] ) ? $option['version'] : $option;
 
-		// 4/5/6 系などのレガシー値や $versions に存在しないキーが保存されている場合はデフォルト（7 系 CSS）へフォールバック。
-		// $versions は 7 系のキーのみ持つため、該当しなければデフォルトに寄せる。
+		// フィルタ等で $versions に存在しないキーが返っても未定義参照にならないよう、
+		// 確実に存在する 7 系 CSS を最終フォールバックにする（$versions は 7 系のキーのみ持つ）。
 		if ( ! is_string( $version ) || empty( $versions[ $version ] ) ) {
-			$default = self::get_option_default();
-			$version = $default['version'];
+			$version = '7_WebFonts_CSS';
 		}
 
 		return $versions[ $version ];
