@@ -311,19 +311,18 @@ class VkFontAwesomeVersions {
 		$versions = self::versions();
 		$option   = get_option( 'vk_font_awesome_options', self::get_option_default() );
 
-		if ( '7_WebFonts_CSS' === $option['version'] ) {
-			$option = '7_WebFonts_CSS';
-		} elseif ( '7_SVG_JS' === $option['version'] ) {
-			$option = '7_SVG_JS';
+		// 保存値は array( 'version' => ... ) 想定だが、古い保存値や誤った値が入っている場合に備えて
+		// バージョンキー（文字列）を安全に取り出す。配列のまま添字アクセスすると PHP 8 で Fatal になるため。
+		$version = is_array( $option ) && isset( $option['version'] ) ? $option['version'] : $option;
+
+		// 4/5/6 系などのレガシー値や $versions に存在しないキーが保存されている場合はデフォルト（7 系 CSS）へフォールバック。
+		// $versions は 7 系のキーのみ持つため、該当しなければデフォルトに寄せる。
+		if ( ! is_string( $version ) || empty( $versions[ $version ] ) ) {
+			$default = self::get_option_default();
+			$version = $default['version'];
 		}
 
-		// 存在しないキーが指定されても7系CSSにフォールバック
-		if ( empty( $versions[ $option ] ) ) {
-			$options = self::get_option_default();
-			$option  = $options['version'];
-		}
-
-		return $versions[ $option ];
+		return $versions[ $version ];
 	}
 
 	/**
