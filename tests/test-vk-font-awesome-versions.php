@@ -194,53 +194,77 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 		// versions() の実キー配列を基準にして期待値を組み立てる（URL は環境依存のため直書きしない）。
 		$versions = VkFontAwesomeVersions::versions();
 
+		// 各ケースは vk_font_awesome_options に保存する生の値（stored）と、current_info() が返すべき versions() のキー（expected_key）を持つ。
+		// stored は current_info() が保存値を書き換えない読み取り専用のため、そのまま評価される。
 		$tests = array(
-			// 7 系 Web Fonts はそのまま 7_WebFonts_CSS のアセット情報を返す。
+			// --- 正常系 ---
 			array(
-				'saved_version' => '7_WebFonts_CSS',
-				'expected_key'  => '7_WebFonts_CSS',
+				'test_condition_name' => '保存値が 7 系 Web Fonts の場合 => 7_WebFonts_CSS のアセット情報を返す',
+				'stored'              => array(
+					'version'       => '7_WebFonts_CSS',
+					'compatibility' => array(),
+				),
+				'expected_key'        => '7_WebFonts_CSS',
 			),
-			// 7 系 SVG はそのまま 7_SVG_JS のアセット情報を返す。
 			array(
-				'saved_version' => '7_SVG_JS',
-				'expected_key'  => '7_SVG_JS',
+				'test_condition_name' => '保存値が 7 系 SVG の場合 => 7_SVG_JS のアセット情報を返す',
+				'stored'              => array(
+					'version'       => '7_SVG_JS',
+					'compatibility' => array(),
+				),
+				'expected_key'        => '7_SVG_JS',
 			),
-			// レガシー値（6 系）は versions() にキーが無いためデフォルト（7_WebFonts_CSS）へフォールバックする。
+			// --- 異常系・境界値（レガシー値／不正値／型不整合はデフォルトの 7_WebFonts_CSS へフォールバック） ---
 			array(
-				'saved_version' => '6_WebFonts_CSS',
-				'expected_key'  => '7_WebFonts_CSS',
+				'test_condition_name' => '保存値がレガシー値（6 系）の場合 => デフォルト 7_WebFonts_CSS へフォールバック',
+				'stored'              => array(
+					'version'       => '6_WebFonts_CSS',
+					'compatibility' => array(),
+				),
+				'expected_key'        => '7_WebFonts_CSS',
 			),
-			// レガシー値（5 系）も同様にフォールバックする。
 			array(
-				'saved_version' => '5_WebFonts_CSS',
-				'expected_key'  => '7_WebFonts_CSS',
+				'test_condition_name' => '保存値がレガシー値（5 系）の場合 => デフォルト 7_WebFonts_CSS へフォールバック',
+				'stored'              => array(
+					'version'       => '5_WebFonts_CSS',
+					'compatibility' => array(),
+				),
+				'expected_key'        => '7_WebFonts_CSS',
 			),
-			// レガシー値（4.7 系）も同様にフォールバックする。
 			array(
-				'saved_version' => '4.7',
-				'expected_key'  => '7_WebFonts_CSS',
+				'test_condition_name' => '保存値がレガシー値（4.7 系）の場合 => デフォルト 7_WebFonts_CSS へフォールバック',
+				'stored'              => array(
+					'version'       => '4.7',
+					'compatibility' => array(),
+				),
+				'expected_key'        => '7_WebFonts_CSS',
 			),
-			// 未知の不正な値もフォールバックする。
 			array(
-				'saved_version' => 'invalid_value',
-				'expected_key'  => '7_WebFonts_CSS',
+				'test_condition_name' => '保存値が未知の不正な文字列の場合 => デフォルト 7_WebFonts_CSS へフォールバック',
+				'stored'              => array(
+					'version'       => 'invalid_value',
+					'compatibility' => array(),
+				),
+				'expected_key'        => '7_WebFonts_CSS',
+			),
+			array(
+				'test_condition_name' => '保存値の配列に version キーが無い場合 => デフォルト 7_WebFonts_CSS へフォールバック',
+				'stored'              => array( 'compatibility' => array() ),
+				'expected_key'        => '7_WebFonts_CSS',
+			),
+			array(
+				'test_condition_name' => '保存値が配列でなく文字列（旧形式）の場合 => Fatal を起こさずデフォルト 7_WebFonts_CSS へフォールバック',
+				'stored'              => '6_WebFonts_CSS',
+				'expected_key'        => '7_WebFonts_CSS',
 			),
 		);
 
-		foreach ( $tests as $value ) {
-			// テスト対象のバージョンを保存する（current_info() は保存値を書き換えない読み取り専用のため、この値がそのまま評価される）。
-			update_option(
-				'vk_font_awesome_options',
-				array(
-					'version'       => $value['saved_version'],
-					'compatibility' => array(
-						'v4' => false,
-						'v5' => false,
-					),
-				)
-			);
+		foreach ( $tests as $case ) {
+			// テスト対象の値を保存する。
+			update_option( 'vk_font_awesome_options', $case['stored'] );
 			$return = VkFontAwesomeVersions::current_info();
-			$this->assertEquals( $versions[ $value['expected_key'] ], $return, "current_info() failed for saved version: {$value['saved_version']}" );
+			// 期待するアセット情報（versions() の該当キー）と一致することを確認する。
+			$this->assertEquals( $versions[ $case['expected_key'] ], $return, $case['test_condition_name'] );
 		}
 	}
 }
