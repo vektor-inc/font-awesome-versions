@@ -90,6 +90,8 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+- [ 仕様変更 ] Font Awesome を 7.3.0 から 7.3.1 に更新
+
 0.7.5
 - [ 仕様変更 ] Font Awesome を 7.2.0 から 7.3.0 に更新
 - [ 不具合修正 ] Font Awesome の旧バージョン設定が残っていると Fatal Error で画面全体が表示不能になる不具合を修正
