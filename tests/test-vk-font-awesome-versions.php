@@ -219,6 +219,12 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 			return;
 		}
 
+		// sys_get_temp_dir() 自体がシンボリックリンクを含む環境（macOS の /var => /private/var 等）で
+		// ネイティブ実行すると、realpath( WPMU_PLUGIN_DIR ) は最後まで解決した実体パスを返す一方
+		// $real_mu_plugin_dir が未解決のままだと前方一致せず、段階 (3) に落ちて原因追跡しづらい形で
+		// assertion が失敗する。$real_mu_plugin_dir 自体を realpath() へ通しておく（安藤のレビュー指摘 LOW-2）.
+		$real_mu_plugin_dir = wp_normalize_path( realpath( $real_mu_plugin_dir ) );
+
 		$symlink_created = @symlink( $real_mu_plugin_dir, $mu_plugin_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- symlink() が使えない実行環境向けの判定のため.
 
 		if ( ! $symlink_created || ! is_link( $mu_plugin_dir ) ) {
@@ -226,6 +232,12 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 			$this->markTestSkipped( 'このテスト環境では symlink() を作成できませんでした。' );
 			return;
 		}
+
+		// WordPress の起動処理（wp_get_mu_plugins() の is_dir( WPMU_PLUGIN_DIR )）とこのテストの
+		// file_exists() で「存在しない」という stat 結果がキャッシュされたあとに symlink() しているため、
+		// 環境によっては直後の realpath() 等が古い結果を返しうる。保険として明示的にクリアする
+		// （安藤のレビュー指摘 LOW-3）.
+		clearstatcache( true, $mu_plugin_dir );
 
 		try {
 			// __DIR__ 相当（実体パスのまま）を模したパスを渡す。$wp_plugin_paths は空のままなので、
@@ -453,6 +465,45 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 			'https://example.com/wp-content/plugins/sample-plugin/src/',
 			$actual,
 			'基準ディレクトリが末尾スラッシュ付きで渡された場合でも、相対パスの先頭が欠けないこと（R5）'
+		);
+
+		// LOW-4: dir が '/' や '//' のように untrailingslashit() 後に空文字になる場合、
+		// 全マッチ（strpos( $path, '/' ) === 0）を避けて空文字を返すこと（境界値）.
+		$root_directories = array(
+			array(
+				'dir' => '/',
+				'url' => 'https://example.com',
+			),
+			array(
+				'dir' => '//',
+				'url' => 'https://example.com',
+			),
+		);
+		$actual = $this->call_private_static_method(
+			'match_directory_uri',
+			array( '/anything/at/all', $root_directories )
+		);
+		$this->assertEquals(
+			'',
+			$actual,
+			'dir が "/" や "//" のように untrailingslashit() 後に空文字になる場合は全マッチせず空文字を返すこと（LOW-4）'
+		);
+
+		// LOW-5: url 側が末尾スラッシュ付きで渡された場合でも、スラッシュが重複しないこと.
+		$trailing_slash_url_directories = array(
+			array(
+				'dir' => '/wp-content/plugins',
+				'url' => 'https://example.com/wp-content/plugins/',
+			),
+		);
+		$actual = $this->call_private_static_method(
+			'match_directory_uri',
+			array( '/wp-content/plugins/sample-plugin/src', $trailing_slash_url_directories )
+		);
+		$this->assertEquals(
+			'https://example.com/wp-content/plugins/sample-plugin/src/',
+			$actual,
+			'url 側が末尾スラッシュ付きで渡された場合でもスラッシュが重複しないこと（LOW-5）'
 		);
 	}
 

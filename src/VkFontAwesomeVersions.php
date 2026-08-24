@@ -274,9 +274,18 @@ class VkFontAwesomeVersions {
 			// 長さを使っていたため、WP_CONTENT_DIR 等が末尾スラッシュ付きで define() されている環境で
 			// 相対パスの先頭が1文字欠ける不具合があった）.
 			$dir = untrailingslashit( $directory['dir'] );
+			// $directory['dir'] が '/' や '//' のように untrailingslashit() 後に空文字になるケースを弾く。
+			// 空文字のままだと strpos( $path, '/' ) === 0 で全マッチしてしまう
+			// （resolve_symlinked_plugin_path() に入れた同趣旨のガード（R1）と揃えている。安藤のレビュー指摘 LOW-4）.
+			if ( '' === $dir ) {
+				continue;
+			}
 			if ( $path === $dir || 0 === strpos( $path, $dir . '/' ) ) {
 				$relative_path = substr( $path, strlen( $dir ) );
-				return $directory['url'] . $relative_path . '/';
+				// url 側も末尾スラッシュを正規化してから連結する。正規化しないと、WP_PLUGIN_URL /
+				// WP_CONTENT_URL 等を末尾スラッシュ付きで define() している環境でスラッシュが重複する
+				// （dir 側は R5 で untrailingslashit() 済みのため、url 側も揃える。安藤のレビュー指摘 LOW-5）.
+				return untrailingslashit( $directory['url'] ) . $relative_path . '/';
 			}
 		}
 		return '';
