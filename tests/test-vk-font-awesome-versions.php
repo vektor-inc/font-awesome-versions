@@ -82,15 +82,237 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 				'path'    => WP_PLUGIN_DIR . '-extra/some-plugin/vendor/vektor-inc/font-awesome-versions/src',
 				'correct' => content_url() . '/plugins-extra/some-plugin/vendor/vektor-inc/font-awesome-versions/src/',
 			),
-			// どのディレクトリにもマッチしないパスは空文字を返す.
+			// どのディレクトリにもマッチしないパスは、ドメイン直結の壊れた URL を避けるため
+			// 最後の手段として content_url()（末尾スラッシュ付き）を返す（空文字は返さない。issue #56）.
 			array(
 				'path'    => '/opt/custom/path/vektor-inc/font-awesome-versions/src',
-				'correct' => '',
+				'correct' => trailingslashit( content_url() ),
 			),
 		);
 		foreach ( $tests as $key => $value ) {
 			$return = VkFontAwesomeVersions::get_directory_uri( $value['path'] );
 			$this->assertEquals( $value['correct'], $return );
+		}
+	}
+
+	/**
+	 * Test get_directory_uri() : シンボリックリンクで WordPress が配置された環境（AWS Bitnami 等）の再現テスト.
+	 *
+	 * __DIR__ はシンボリックリンクを辿って実体のパスを返す一方、WordPress の定数（WP_PLUGIN_DIR 等）は
+	 * シンボリックリンクを辿らない文字列のままのため、単純な前方一致ではどの基準ディレクトリにも一致せず、
+	 * URL が壊れる不具合の再現テスト（issue #56）。
+	 * WordPress 本体が持つ実体パス→論理パスの対応表（$wp_plugin_paths。plugin_basename() が使っているもの）を
+	 * シミュレートして渡し、正しい URL に解決されることを確認する。
+	 *
+	 * @return void
+	 */
+	function test_get_directory_uri_with_symlinked_plugin_paths() {
+		global $wp_plugin_paths;
+		// テスト終了後に元へ戻すため退避しておく.
+		$original_wp_plugin_paths = $wp_plugin_paths;
+
+		// Bitnami 環境を模したシンボリックリンクの対応（論理パス（定数ベース） => 実体パス）.
+		$symlinked_plugin_dir    = wp_normalize_path( WP_PLUGIN_DIR );
+		$real_plugin_dir         = '/bitnami/wordpress/wp-content/plugins';
+		$symlinked_mu_plugin_dir = wp_normalize_path( WPMU_PLUGIN_DIR );
+		$real_mu_plugin_dir      = '/bitnami/wordpress/wp-content/mu-plugins';
+
+		$tests = array(
+			array(
+				'test_condition_name' => 'プラグイン配下がシンボリックリンク構成の場合 => plugins_url() ベースの正しい URL になる',
+				'wp_plugin_paths'     => array(
+					$symlinked_plugin_dir => $real_plugin_dir,
+				),
+				'path'                => $real_plugin_dir . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+				'correct'             => plugins_url() . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src/',
+			),
+			array(
+				'test_condition_name' => 'mu-plugins 配下がシンボリックリンク構成の場合 => WPMU_PLUGIN_URL ベースの正しい URL になる',
+				'wp_plugin_paths'     => array(
+					$symlinked_mu_plugin_dir => $real_mu_plugin_dir,
+				),
+				'path'                => $real_mu_plugin_dir . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+				'correct'             => WPMU_PLUGIN_URL . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src/',
+			),
+			array(
+				'test_condition_name' => '対応表に無関係な（今回のパスに関係しない）エントリしか無く、通常構成のパスを渡した場合 => 従来どおり解決される（既存挙動への回帰が無いこと）',
+				'wp_plugin_paths'     => array(
+					$symlinked_plugin_dir => $real_plugin_dir,
+				),
+				'path'                => WP_PLUGIN_DIR . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+				'correct'             => plugins_url() . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src/',
+			),
+		);
+
+		foreach ( $tests as $case ) {
+			$wp_plugin_paths = $case['wp_plugin_paths'];
+			$actual          = VkFontAwesomeVersions::get_directory_uri( $case['path'] );
+			$this->assertEquals( $case['correct'], $actual, $case['test_condition_name'] );
+		}
+
+		// グローバル変数を元に戻す.
+		$wp_plugin_paths = $original_wp_plugin_paths;
+	}
+
+	/**
+	 * Test resolve_symlinked_plugin_path() method.
+	 *
+	 * WordPress 本体の $wp_plugin_paths（論理パス（定数ベース）=> 実体パス（realpath）の対応表）を使って、
+	 * 実体パス表記のパスを論理パス表記へ変換できることを確認する。
+	 *
+	 * @return void
+	 */
+	function test_resolve_symlinked_plugin_path() {
+		global $wp_plugin_paths;
+		$original_wp_plugin_paths = $wp_plugin_paths;
+
+		$tests = array(
+			array(
+				'test_condition_name' => '対応表に一致するエントリがある場合 => 実体パスの接頭辞を論理パスへ変換する',
+				'wp_plugin_paths'     => array(
+					'/opt/bitnami/wordpress/wp-content/plugins' => '/bitnami/wordpress/wp-content/plugins',
+				),
+				'path'                => '/bitnami/wordpress/wp-content/plugins/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+				'correct'             => '/opt/bitnami/wordpress/wp-content/plugins/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+			),
+			array(
+				'test_condition_name' => '対応表に複数エントリがある場合 => より長い（より具体的な）実体パスに優先的にマッチする',
+				'wp_plugin_paths'     => array(
+					'/opt/bitnami/wordpress/wp-content/plugins'                  => '/bitnami/wordpress/wp-content/plugins',
+					'/opt/bitnami/wordpress/wp-content/plugins/vk-blocks/vendor' => '/bitnami/wordpress/wp-content/plugins/vk-blocks/vendor-real',
+				),
+				'path'                => '/bitnami/wordpress/wp-content/plugins/vk-blocks/vendor-real/vektor-inc/font-awesome-versions/src',
+				'correct'             => '/opt/bitnami/wordpress/wp-content/plugins/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+			),
+			array(
+				'test_condition_name' => '対応表が空の場合 => $path をそのまま返す（境界値）',
+				'wp_plugin_paths'     => array(),
+				'path'                => '/bitnami/wordpress/wp-content/plugins/vk-blocks/src',
+				'correct'             => '/bitnami/wordpress/wp-content/plugins/vk-blocks/src',
+			),
+			array(
+				'test_condition_name' => '対応表に一致するエントリが無い場合 => $path をそのまま返す（境界値）',
+				'wp_plugin_paths'     => array(
+					'/opt/bitnami/wordpress/wp-content/plugins' => '/bitnami/wordpress/wp-content/plugins',
+				),
+				'path'                => '/var/www/other/vk-blocks/src',
+				'correct'             => '/var/www/other/vk-blocks/src',
+			),
+		);
+
+		foreach ( $tests as $case ) {
+			$wp_plugin_paths = $case['wp_plugin_paths'];
+			$actual          = VkFontAwesomeVersions::resolve_symlinked_plugin_path( $case['path'] );
+			$this->assertEquals( $case['correct'], $actual, $case['test_condition_name'] );
+		}
+
+		$wp_plugin_paths = $original_wp_plugin_paths;
+	}
+
+	/**
+	 * Test realpath_directories() method.
+	 *
+	 * 基準ディレクトリの dir 側を realpath() で実体パスへ解決できること、
+	 * 存在しないディレクトリ（realpath() が false を返すケース）は候補から除外されることを確認する.
+	 *
+	 * @return void
+	 */
+	function test_realpath_directories() {
+		// テスト用に実体ディレクトリとそのシンボリックリンクを用意する.
+		$real_dir = wp_normalize_path( sys_get_temp_dir() ) . '/vkfav-test-real-' . uniqid();
+		mkdir( $real_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- テスト用一時ディレクトリの作成.
+
+		$symlink_dir = wp_normalize_path( sys_get_temp_dir() ) . '/vkfav-test-symlink-' . uniqid();
+		$symlink_created = @symlink( $real_dir, $symlink_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- symlink() が使えない実行環境向けの判定のため.
+
+		if ( ! $symlink_created || ! is_link( $symlink_dir ) ) {
+			rmdir( $real_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+			$this->markTestSkipped( 'このテスト環境では symlink() を作成できませんでした。' );
+			return;
+		}
+
+		$nonexistent_dir = wp_normalize_path( sys_get_temp_dir() ) . '/vkfav-test-missing-' . uniqid();
+
+		// 後片付け前に期待値を確定させておく.
+		$expected_real_dir = wp_normalize_path( realpath( $real_dir ) );
+
+		$directories = array(
+			// 正常系1: シンボリックリンクを realpath() で実体パスへ解決できる.
+			array(
+				'dir' => $symlink_dir,
+				'url' => 'https://example.com/symlinked',
+			),
+			// 正常系2: 元々シンボリックリンクでない実体ディレクトリはそのまま解決される.
+			array(
+				'dir' => $real_dir,
+				'url' => 'https://example.com/real',
+			),
+			// 異常系（境界値）: 存在しないディレクトリは realpath() が false を返すため候補から除外される.
+			array(
+				'dir' => $nonexistent_dir,
+				'url' => 'https://example.com/missing',
+			),
+		);
+
+		$result = VkFontAwesomeVersions::realpath_directories( $directories );
+
+		// テスト用ファイルの後片付け.
+		unlink( $symlink_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_unlink
+		rmdir( $real_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+
+		$this->assertCount( 2, $result, '存在しないディレクトリは候補から除外され、2件だけ残ること' );
+		$this->assertEquals( $expected_real_dir, $result[0]['dir'], 'シンボリックリンクが realpath() で実体パスへ解決されること' );
+		$this->assertEquals( 'https://example.com/symlinked', $result[0]['url'], 'url はそのまま保持されること（シンボリックリンク側）' );
+		$this->assertEquals( $expected_real_dir, $result[1]['dir'], '元々実体ディレクトリだったパスは変化しないこと' );
+		$this->assertEquals( 'https://example.com/real', $result[1]['url'], 'url はそのまま保持されること（実体ディレクトリ側）' );
+	}
+
+	/**
+	 * Test match_directory_uri() method.
+	 *
+	 * $path が基準ディレクトリの前方一致で判定され、URL に変換されること、
+	 * ディレクトリ境界の誤マッチ（例: plugins と plugins-extra）が起きないことを確認する.
+	 *
+	 * @return void
+	 */
+	function test_match_directory_uri() {
+		$directories = array(
+			array(
+				'dir' => '/wp-content/plugins',
+				'url' => 'https://example.com/wp-content/plugins',
+			),
+			array(
+				'dir' => '/wp-content',
+				'url' => 'https://example.com/wp-content',
+			),
+		);
+
+		$tests = array(
+			array(
+				'test_condition_name' => '基準ディレクトリ配下のパスは URL に変換される',
+				'path'                => '/wp-content/plugins/sample-plugin/src',
+				'correct'             => 'https://example.com/wp-content/plugins/sample-plugin/src/',
+			),
+			array(
+				'test_condition_name' => '基準ディレクトリそのものを渡した場合も URL に変換される',
+				'path'                => '/wp-content/plugins',
+				'correct'             => 'https://example.com/wp-content/plugins/',
+			),
+			array(
+				'test_condition_name' => '境界判定: /wp-content/plugins-extra は /wp-content/plugins に誤マッチせず、より広い /wp-content にマッチする',
+				'path'                => '/wp-content/plugins-extra/sample-plugin/src',
+				'correct'             => 'https://example.com/wp-content/plugins-extra/sample-plugin/src/',
+			),
+			array(
+				'test_condition_name' => 'どの基準ディレクトリにも一致しない場合は空文字を返す（境界値）',
+				'path'                => '/opt/custom/path',
+				'correct'             => '',
+			),
+		);
+
+		foreach ( $tests as $case ) {
+			$actual = VkFontAwesomeVersions::match_directory_uri( $case['path'], $directories );
+			$this->assertEquals( $case['correct'], $actual, $case['test_condition_name'] );
 		}
 	}
 

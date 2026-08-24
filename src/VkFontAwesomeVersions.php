@@ -97,13 +97,21 @@ class VkFontAwesomeVersions {
 	/**
 	 * Undocumented function
 	 *
+	 * AWS Bitnami 等、シンボリックリンクで WordPress が配置された環境では、
+	 * __DIR__（PHP。シンボリックリンクを辿って実体のパスを返す）と
+	 * WP_PLUGIN_DIR 等の WordPress の定数（シンボリックリンクを辿らない文字列）が食い違い、
+	 * 単純な前方一致では基準ディレクトリのどれにも一致しないことがある（issue #56）。
+	 * そのため、次の3段階で解決を試みる。
+	 * 1. WordPress 本体の対応表（$wp_plugin_paths）による変換を先に試す。
+	 * 2. それでも一致しなければ、基準ディレクトリ側を realpath() で実体パスへ変換して再度突き合わせる。
+	 * 3. それでも解決できなければ、空文字（ドメイン直結の壊れた URL の原因になる）を返さず、
+	 *    content_url() を最後の手段として返す（詳細は各処理のコメントを参照）。
+	 *
 	 * @since 0.3.0
 	 * @param string $path PHPUnit テスト用.
 	 * @return string $uri.
 	 */
 	public static function get_directory_uri( $path = '' ) {
-
-		$uri = '';
 
 		if ( ! empty( $path ) ) {
 			$path = wp_normalize_path( $path );
@@ -133,18 +141,114 @@ class VkFontAwesomeVersions {
 			),
 		);
 
+		// (1) WordPress 本体が持つシンボリックリンク対応表（plugin_basename が内部で使っているもの）による変換を先に試す.
+		$resolved_path = self::resolve_symlinked_plugin_path( $path );
+		$uri           = self::match_directory_uri( $resolved_path, $directories );
+
+		// (2) (1) で一致しなかった場合、基準ディレクトリ側を realpath() で実体パスへ解決してから、
+		// 変換前の $path（__DIR__ 相当。実体パスのまま）と改めて突き合わせる.
+		if ( '' === $uri ) {
+			$uri = self::match_directory_uri( $path, self::realpath_directories( $directories ) );
+		}
+
+		if ( '' !== $uri ) {
+			return $uri;
+		}
+
+		// (3) (1)(2) のいずれでも解決できなかったときの最後の手段.
+		// 空文字を返すと、呼び出し元 versions() で 'font-awesome/' という相対パスになり、
+		// wp_enqueue_style() がサイト URL（末尾スラッシュ無し）を前置してドメインと直結した壊れた URL になる（issue #56）。
+		// content_url() はファイルシステムとの突き合わせを行わない純粋な URL 生成関数のため、
+		// このケースでも安全にサイト内の絶対 URL を返せる。実際に Font Awesome が置かれたディレクトリと
+		// 一致しない可能性はある（読み込むファイルが 404 になりうる）が、ドメイン直結の壊れた URL は避けられる。
+		return trailingslashit( content_url() );
+	}
+
+	/**
+	 * シンボリックリンク対応の変換.
+	 *
+	 * WordPress 本体が持つグローバル変数 $wp_plugin_paths（論理パス（定数ベース）→実体パス（realpath）の
+	 * 対応表。plugin_basename が内部で使っているもの）を使って、実体パス表記の $path を
+	 * 論理パス（定数ベース）表記へ変換する。対応表に一致するエントリが無ければ $path をそのまま返す。
+	 *
+	 * この対応表を直接参照し plugin_basename 自体は呼び出していない。plugin_basename は
+	 * WP_PLUGIN_DIR / WPMU_PLUGIN_DIR からの相対パス（basename）へ変換してしまうため、
+	 * テーマ配下・wp-content 直下など他の基準ディレクトリの判定に使い回せなくなるためである。
+	 * 対応表の構造・突き合わせ方（値が長いものを優先する arsort）は plugin_basename の実装に合わせている。
+	 *
+	 * @since 0.7.6
+	 * @param string $path 変換対象のパス（wp_normalize_path 済み）.
+	 * @return string 変換後のパス（対応表に一致しなければ $path のまま）.
+	 */
+	public static function resolve_symlinked_plugin_path( $path ) {
+		global $wp_plugin_paths;
+
+		if ( empty( $wp_plugin_paths ) || ! is_array( $wp_plugin_paths ) ) {
+			return $path;
+		}
+
+		// 値（実体パス）が長いものから優先的に評価する。plugin_basename() と同じ arsort().
+		$plugin_paths = $wp_plugin_paths;
+		arsort( $plugin_paths );
+
+		foreach ( $plugin_paths as $dir => $realdir ) {
+			// $dir = 論理パス（定数ベース）, $realdir = 実体パス（realpath）.
+			$realdir = wp_normalize_path( $realdir );
+			if ( 0 === strpos( $path, $realdir ) ) {
+				return wp_normalize_path( $dir ) . substr( $path, strlen( $realdir ) );
+			}
+		}
+
+		return $path;
+	}
+
+	/**
+	 * 基準ディレクトリの配列（dir/url の組）を、dir 側を realpath() で実体パスへ解決した配列に変換する。
+	 * realpath() は存在しないパスに false を返すため、その場合はマッチ対象から除外する
+	 * （false のまま突き合わせに使うと strpos() 等で意図しない挙動になるため）。
+	 *
+	 * @since 0.7.6
+	 * @param array $directories dir/url の組の配列.
+	 * @return array realpath 解決後の dir/url の組の配列（解決できなかったものは除外済み）.
+	 */
+	public static function realpath_directories( $directories ) {
+		$resolved = array();
 		foreach ( $directories as $directory ) {
+			$real_dir = realpath( $directory['dir'] );
+			if ( false === $real_dir ) {
+				continue;
+			}
+			$resolved[] = array(
+				'dir' => wp_normalize_path( $real_dir ),
+				'url' => $directory['url'],
+			);
+		}
+		return $resolved;
+	}
+
+	/**
+	 * $path が $directories（dir/url の組の配列）のいずれかの dir と前方一致するか調べ、
+	 * 一致したら URL を組み立てて返す。一致しなければ空文字を返す.
+	 *
+	 * @since 0.7.6
+	 * @param string $path 判定対象のパス.
+	 * @param array  $directories dir/url の組の配列.
+	 * @return string 一致した場合は URL、しなければ空文字.
+	 */
+	public static function match_directory_uri( $path, $directories ) {
+		foreach ( $directories as $directory ) {
+			if ( empty( $directory['dir'] ) ) {
+				continue;
+			}
 			// ディレクトリ境界を正しく判定するため、末尾にスラッシュを付与して比較する。
 			// 例: /wp-content/plugins が /wp-content/plugins-extra に誤マッチしないようにする。
 			$dir_with_slash = rtrim( $directory['dir'], '/' ) . '/';
 			if ( strpos( $path, $dir_with_slash ) === 0 || $path === $directory['dir'] ) {
 				$relative_path = substr( $path, strlen( $directory['dir'] ) );
-				$uri           = $directory['url'] . $relative_path . '/';
-				break;
+				return $directory['url'] . $relative_path . '/';
 			}
 		}
-
-		return $uri;
+		return '';
 	}
 
 	/**

@@ -90,6 +90,8 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 
 ---
 
+- [ 不具合修正 ] シンボリックリンクで WordPress が配置された環境（AWS Bitnami 等）で Font Awesome の CSS/JS の URL のドメイン直後にスラッシュが入らず崩れ、アイコンが 1 つも表示されない不具合を修正
+
 0.7.5
 - [ 仕様変更 ] Font Awesome を 7.2.0 から 7.3.0 に更新
 - [ 不具合修正 ] Font Awesome の旧バージョン設定が残っていると Fatal Error で画面全体が表示不能になる不具合を修正
