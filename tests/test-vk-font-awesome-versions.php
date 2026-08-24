@@ -96,13 +96,39 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * private static メソッドをテストから呼び出すためのヘルパー.
+	 *
+	 * resolve_symlinked_plugin_path() / realpath_directories() / match_directory_uri() は
+	 * ライブラリ外部から呼ぶ用途を想定していないため private static にしている（安藤のレビュー指摘 R2）。
+	 * Composer パッケージとして配布しており public にすると破壊的変更なしに変更できなくなるため。
+	 * テストからは ReflectionMethod 経由で呼び出す.
+	 *
+	 * @param string $method_name 呼び出す private static メソッド名.
+	 * @param array  $args 引数の配列.
+	 * @return mixed メソッドの戻り値.
+	 */
+	private function call_private_static_method( $method_name, array $args = array() ) {
+		$reflection = new ReflectionMethod( VkFontAwesomeVersions::class, $method_name );
+		$reflection->setAccessible( true );
+		return $reflection->invokeArgs( null, $args );
+	}
+
+	/**
 	 * Test get_directory_uri() : シンボリックリンクで WordPress が配置された環境（AWS Bitnami 等）の再現テスト.
 	 *
 	 * __DIR__ はシンボリックリンクを辿って実体のパスを返す一方、WordPress の定数（WP_PLUGIN_DIR 等）は
 	 * シンボリックリンクを辿らない文字列のままのため、単純な前方一致ではどの基準ディレクトリにも一致せず、
 	 * URL が壊れる不具合の再現テスト（issue #56）。
-	 * WordPress 本体が持つ実体パス→論理パスの対応表（$wp_plugin_paths。plugin_basename() が使っているもの）を
-	 * シミュレートして渡し、正しい URL に解決されることを確認する。
+	 *
+	 * 対応表 $wp_plugin_paths のキーは、WordPress 本体（wp_register_plugin_realpath()。wp-includes/plugin.php）が
+	 * 「プラグイン 1 個分のディレクトリ」単位でしか登録しない。WP_PLUGIN_DIR / WPMU_PLUGIN_DIR そのものが
+	 * キーになることは無い（プラグインのディレクトリが WP_PLUGIN_DIR 自身と一致する場合の早期 return がある
+	 * ため）。このテストでもプラグイン単位のキー（WP_PLUGIN_DIR . '/プラグインディレクトリ名'）を使う。
+	 *
+	 * なお mu-plugins 配下のシンボリックリンクは、mu-plugins の一覧取得が WPMU_PLUGIN_DIR 直下のファイルしか
+	 * 見ないため dirname() が WPMU_PLUGIN_DIR 自身と一致し、$wp_plugin_paths にエントリが登録されない
+	 * （実環境では段階 (2) の realpath_directories() 側だけが解決する）。そちらは
+	 * test_get_directory_uri_with_realpath_symlinked_mu_plugins() で検証する.
 	 *
 	 * @return void
 	 */
@@ -111,11 +137,10 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 		// テスト終了後に元へ戻すため退避しておく.
 		$original_wp_plugin_paths = $wp_plugin_paths;
 
-		// Bitnami 環境を模したシンボリックリンクの対応（論理パス（定数ベース） => 実体パス）.
-		$symlinked_plugin_dir    = wp_normalize_path( WP_PLUGIN_DIR );
-		$real_plugin_dir         = '/bitnami/wordpress/wp-content/plugins';
-		$symlinked_mu_plugin_dir = wp_normalize_path( WPMU_PLUGIN_DIR );
-		$real_mu_plugin_dir      = '/bitnami/wordpress/wp-content/mu-plugins';
+		// Bitnami 環境を模した、プラグイン 1 個分のディレクトリ単位のシンボリックリンク対応
+		// （論理パス（定数ベース） => 実体パス）.
+		$symlinked_plugin_dir = wp_normalize_path( WP_PLUGIN_DIR ) . '/vk-blocks';
+		$real_plugin_dir      = '/bitnami/wordpress/wp-content/plugins/vk-blocks';
 
 		$tests = array(
 			array(
@@ -123,16 +148,8 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 				'wp_plugin_paths'     => array(
 					$symlinked_plugin_dir => $real_plugin_dir,
 				),
-				'path'                => $real_plugin_dir . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
+				'path'                => $real_plugin_dir . '/vendor/vektor-inc/font-awesome-versions/src',
 				'correct'             => plugins_url() . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src/',
-			),
-			array(
-				'test_condition_name' => 'mu-plugins 配下がシンボリックリンク構成の場合 => WPMU_PLUGIN_URL ベースの正しい URL になる',
-				'wp_plugin_paths'     => array(
-					$symlinked_mu_plugin_dir => $real_mu_plugin_dir,
-				),
-				'path'                => $real_mu_plugin_dir . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src',
-				'correct'             => WPMU_PLUGIN_URL . '/vk-blocks/vendor/vektor-inc/font-awesome-versions/src/',
 			),
 			array(
 				'test_condition_name' => '対応表に無関係な（今回のパスに関係しない）エントリしか無く、通常構成のパスを渡した場合 => 従来どおり解決される（既存挙動への回帰が無いこと）',
@@ -144,14 +161,86 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 			),
 		);
 
-		foreach ( $tests as $case ) {
-			$wp_plugin_paths = $case['wp_plugin_paths'];
-			$actual          = VkFontAwesomeVersions::get_directory_uri( $case['path'] );
-			$this->assertEquals( $case['correct'], $actual, $case['test_condition_name'] );
+		try {
+			foreach ( $tests as $case ) {
+				$wp_plugin_paths = $case['wp_plugin_paths'];
+				$actual          = VkFontAwesomeVersions::get_directory_uri( $case['path'] );
+				$this->assertEquals( $case['correct'], $actual, $case['test_condition_name'] );
+			}
+		} finally {
+			// アサーション失敗で例外が飛んだ場合でも、後続テストへ偽の対応表を残さないよう必ず復元する
+			// （WP_UnitTestCase は backupGlobals を有効にしていないため。安藤のレビュー指摘 M2）.
+			$wp_plugin_paths = $original_wp_plugin_paths;
+		}
+	}
+
+	/**
+	 * Test get_directory_uri() : mu-plugins 配下がシンボリックリンク構成の場合の実環境再現テスト.
+	 *
+	 * mu-plugins 配下のシンボリックリンクは $wp_plugin_paths に登録されない
+	 * （test_get_directory_uri_with_symlinked_plugin_paths() の PHPDoc 参照）ため、実環境では
+	 * 段階 (2)（realpath_directories()）だけがこのケースを救う。$path の変換だけでなく、
+	 * get_directory_uri() が参照する基準ディレクトリ（WPMU_PLUGIN_DIR）自体が実際に
+	 * シンボリックリンクである状態を検証するため、このテストでは実際に symlink() を使って
+	 * WPMU_PLUGIN_DIR のパスそのものにシンボリックリンクを作成する（安藤のレビュー指摘 M1）。
+	 *
+	 * WPMU_PLUGIN_DIR は既定では作成されない（mu-plugins は任意で使うディレクトリ）ため、
+	 * このテストでは「存在しない場合にのみ」シンボリックリンクを作成し、テスト後に必ず元の
+	 * 「存在しない」状態へ戻す。既に何か存在する場合（実ディレクトリ・別のシンボリックリンク問わず）は、
+	 * 共有のテスト用 WordPress 環境を壊さないよう上書きせずスキップする。symlink() が使えない環境でも
+	 * 同様にスキップする.
+	 *
+	 * なお、テーマルート（get_theme_root()）についても同じ理由（段階 (2) が唯一の救済経路）が成り立つが、
+	 * テーマルートには実際に使用中のテーマ一式が既定で置かれており、そのパスをシンボリックリンクへ
+	 * 差し替えるのは既存のテスト用 WordPress 環境を壊すリスクが高いため、本 PR ではテーマルートに対する
+	 * 実シンボリックリンクの統合テストは追加していない（安藤の指摘どおり、テーマだけ個別に symlink する
+	 * 構成は今回のスコープでも解決されず段階 (3) の content_url() フォールバックに落ちる）。
+	 * realpath_directories() 自体がテーマルートを含む全ディレクトリに同一ロジックで適用されることは
+	 * test_realpath_directories() の直接テストで担保している.
+	 *
+	 * @return void
+	 */
+	function test_get_directory_uri_with_realpath_symlinked_mu_plugins() {
+		$mu_plugin_dir = wp_normalize_path( WPMU_PLUGIN_DIR );
+
+		// 共有のテスト環境（WPMU_PLUGIN_DIR そのもの）を壊さないよう、既に何か存在する場合は作成しない.
+		if ( file_exists( $mu_plugin_dir ) || is_link( $mu_plugin_dir ) ) {
+			$this->markTestSkipped( 'WPMU_PLUGIN_DIR が既に存在するため、このテスト環境ではシンボリックリンクを作成しません。' );
+			return;
 		}
 
-		// グローバル変数を元に戻す.
-		$wp_plugin_paths = $original_wp_plugin_paths;
+		// 実体ディレクトリを用意し、WPMU_PLUGIN_DIR のパスそのものをそこへのシンボリックリンクにする.
+		$real_mu_plugin_dir = wp_normalize_path( sys_get_temp_dir() ) . '/vkfav-test-mu-real-' . uniqid();
+		$mkdir_result       = mkdir( $real_mu_plugin_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- テスト用一時ディレクトリの作成.
+		if ( ! $mkdir_result ) {
+			// mkdir() の失敗を確認せずに進むと、symlink() が dangling link のまま「成功」してしまい、
+			// realpath() が false を返して原因不明のまま assertion が落ちる（安藤のレビュー指摘 R7）.
+			$this->markTestSkipped( 'このテスト環境ではテスト用の一時ディレクトリを作成できませんでした。' );
+			return;
+		}
+
+		$symlink_created = @symlink( $real_mu_plugin_dir, $mu_plugin_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- symlink() が使えない実行環境向けの判定のため.
+
+		if ( ! $symlink_created || ! is_link( $mu_plugin_dir ) ) {
+			rmdir( $real_mu_plugin_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+			$this->markTestSkipped( 'このテスト環境では symlink() を作成できませんでした。' );
+			return;
+		}
+
+		try {
+			// __DIR__ 相当（実体パスのまま）を模したパスを渡す。$wp_plugin_paths は空のままなので、
+			// 段階 (0)（従来どおりの前方一致）・段階 (1)（$wp_plugin_paths）はどちらも一致せず、
+			// 段階 (2)（realpath_directories()）だけが解決できることを確認する.
+			$path     = $real_mu_plugin_dir . '/some-mu-plugin/vendor/vektor-inc/font-awesome-versions/src';
+			$actual   = VkFontAwesomeVersions::get_directory_uri( $path );
+			$expected = WPMU_PLUGIN_URL . '/some-mu-plugin/vendor/vektor-inc/font-awesome-versions/src/';
+
+			$this->assertEquals( $expected, $actual, 'mu-plugins 配下のシンボリックリンクが段階 (2)（realpath_directories()）経由で正しい URL に解決されること' );
+		} finally {
+			// WPMU_PLUGIN_DIR を元の「存在しない」状態へ確実に戻す.
+			unlink( $mu_plugin_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_unlink
+			rmdir( $real_mu_plugin_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+		}
 	}
 
 	/**
@@ -159,6 +248,9 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 	 *
 	 * WordPress 本体の $wp_plugin_paths（論理パス（定数ベース）=> 実体パス（realpath）の対応表）を使って、
 	 * 実体パス表記のパスを論理パス表記へ変換できることを確認する。
+	 * ディレクトリ境界の誤マッチ（例: /srv/foo が /srv/foo-bar に誤マッチしない）と、
+	 * 対応表の値が空文字の場合に全マッチしないこと（PHP 8 の strpos( $path, '' ) === 0 対策）も確認する
+	 * （安藤のレビュー指摘 R1）.
 	 *
 	 * @return void
 	 */
@@ -198,15 +290,34 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 				'path'                => '/var/www/other/vk-blocks/src',
 				'correct'             => '/var/www/other/vk-blocks/src',
 			),
+			array(
+				'test_condition_name' => 'ディレクトリ境界外の誤マッチが起きないこと（境界値。R1） => /srv/foo-bar は /srv/foo に誤マッチせず $path をそのまま返す',
+				'wp_plugin_paths'     => array(
+					'/opt/foo' => '/srv/foo',
+				),
+				'path'                => '/srv/foo-bar/vk-blocks/src',
+				'correct'             => '/srv/foo-bar/vk-blocks/src',
+			),
+			array(
+				'test_condition_name' => '対応表の値（実体パス）が空文字の場合 => 全マッチを避けて $path をそのまま返す（境界値。R1。PHP 8 では strpos( $path, "" ) が 0 を返すため要注意）',
+				'wp_plugin_paths'     => array(
+					'/opt/bitnami/wordpress/wp-content/plugins' => '',
+				),
+				'path'                => '/any/path/at/all',
+				'correct'             => '/any/path/at/all',
+			),
 		);
 
-		foreach ( $tests as $case ) {
-			$wp_plugin_paths = $case['wp_plugin_paths'];
-			$actual          = VkFontAwesomeVersions::resolve_symlinked_plugin_path( $case['path'] );
-			$this->assertEquals( $case['correct'], $actual, $case['test_condition_name'] );
+		try {
+			foreach ( $tests as $case ) {
+				$wp_plugin_paths = $case['wp_plugin_paths'];
+				$actual          = $this->call_private_static_method( 'resolve_symlinked_plugin_path', array( $case['path'] ) );
+				$this->assertEquals( $case['correct'], $actual, $case['test_condition_name'] );
+			}
+		} finally {
+			// アサーション失敗で例外が飛んだ場合でも必ず復元する（M2）.
+			$wp_plugin_paths = $original_wp_plugin_paths;
 		}
-
-		$wp_plugin_paths = $original_wp_plugin_paths;
 	}
 
 	/**
@@ -219,10 +330,17 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 	 */
 	function test_realpath_directories() {
 		// テスト用に実体ディレクトリとそのシンボリックリンクを用意する.
-		$real_dir = wp_normalize_path( sys_get_temp_dir() ) . '/vkfav-test-real-' . uniqid();
-		mkdir( $real_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- テスト用一時ディレクトリの作成.
+		$real_dir     = wp_normalize_path( sys_get_temp_dir() ) . '/vkfav-test-real-' . uniqid();
+		$mkdir_result = mkdir( $real_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- テスト用一時ディレクトリの作成.
 
-		$symlink_dir = wp_normalize_path( sys_get_temp_dir() ) . '/vkfav-test-symlink-' . uniqid();
+		if ( ! $mkdir_result ) {
+			// mkdir() の失敗を見ずに進むと、symlink() が dangling link のまま「成功」扱いになり、
+			// realpath() が false を返して assertCount() が原因不明のまま落ちる（安藤のレビュー指摘 R7）.
+			$this->markTestSkipped( 'このテスト環境ではテスト用の一時ディレクトリを作成できませんでした。' );
+			return;
+		}
+
+		$symlink_dir      = wp_normalize_path( sys_get_temp_dir() ) . '/vkfav-test-symlink-' . uniqid();
 		$symlink_created = @symlink( $real_dir, $symlink_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- symlink() が使えない実行環境向けの判定のため.
 
 		if ( ! $symlink_created || ! is_link( $symlink_dir ) ) {
@@ -254,7 +372,7 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 			),
 		);
 
-		$result = VkFontAwesomeVersions::realpath_directories( $directories );
+		$result = $this->call_private_static_method( 'realpath_directories', array( $directories ) );
 
 		// テスト用ファイルの後片付け.
 		unlink( $symlink_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_unlink
@@ -272,6 +390,8 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 	 *
 	 * $path が基準ディレクトリの前方一致で判定され、URL に変換されること、
 	 * ディレクトリ境界の誤マッチ（例: plugins と plugins-extra）が起きないことを確認する.
+	 * 基準ディレクトリが末尾スラッシュ付きで渡された場合でも相対パスの先頭が欠けないことも確認する
+	 * （安藤のレビュー指摘 R5）.
 	 *
 	 * @return void
 	 */
@@ -311,9 +431,29 @@ class VkFontAwesomeVersionsTest extends WP_UnitTestCase {
 		);
 
 		foreach ( $tests as $case ) {
-			$actual = VkFontAwesomeVersions::match_directory_uri( $case['path'], $directories );
+			$actual = $this->call_private_static_method( 'match_directory_uri', array( $case['path'], $directories ) );
 			$this->assertEquals( $case['correct'], $actual, $case['test_condition_name'] );
 		}
+
+		// R5: 基準ディレクトリが末尾スラッシュ付きで渡された場合でも、相対パスの先頭が欠けないこと.
+		// （以前は比較にだけ untrailingslashit 後の値を使い、substr() は元の $directory['dir']（スラッシュ付き）の
+		// 長さを使っていたため、WP_CONTENT_DIR 等が末尾スラッシュ付きで define() されている環境で
+		// 相対パスの先頭が1文字欠ける不具合があった）.
+		$trailing_slash_directories = array(
+			array(
+				'dir' => '/wp-content/plugins/',
+				'url' => 'https://example.com/wp-content/plugins',
+			),
+		);
+		$actual = $this->call_private_static_method(
+			'match_directory_uri',
+			array( '/wp-content/plugins/sample-plugin/src', $trailing_slash_directories )
+		);
+		$this->assertEquals(
+			'https://example.com/wp-content/plugins/sample-plugin/src/',
+			$actual,
+			'基準ディレクトリが末尾スラッシュ付きで渡された場合でも、相対パスの先頭が欠けないこと（R5）'
+		);
 	}
 
 	function test_get_option_fa() {
