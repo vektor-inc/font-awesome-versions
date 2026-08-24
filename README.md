@@ -91,6 +91,9 @@ $icon_description = VkFontAwesomeVersions::get_icon_tag( 'fa-regular fa-envelope
 ---
 
 - [ 仕様変更 ] Font Awesome を 7.3.0 から 7.3.1 に更新
+- [ 仕様変更 ] get_directory_uri() がファイルの置き場所を解決できなかった場合の戻り値を、空文字から wp-content の URL（末尾スラッシュ付き）に変更
+- [ 不具合修正 ] シンボリックリンクで WordPress が配置された環境（AWS Bitnami 等）で Font Awesome の CSS/JS の URL のドメイン直後にスラッシュが入らず崩れ、アイコンが 1 つも表示されない不具合を修正
+- [ 不具合修正 ] WP_CONTENT_DIR 等の定数が末尾スラッシュ付きで定義された環境で、Font Awesome の URL の区切りが 1 つ欠けて読み込みに失敗する不具合を修正
 
 0.7.5
 - [ 仕様変更 ] Font Awesome を 7.2.0 から 7.3.0 に更新
