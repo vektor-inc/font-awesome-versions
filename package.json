@@ -20,6 +20,6 @@
 		"gulp": "^5.0.1",
 		"gulp-replace": "^1.1.4",
 		"npm-check-updates": "^22.2.7",
-		"@wordpress/scripts": "^32.4.1"
+		"@wordpress/scripts": "^37.1.0"
 	}
 }
